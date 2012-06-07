@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.intel.renderer-service-upnp
+Exec=@prefix@/bin/renderer-service-upnp
+

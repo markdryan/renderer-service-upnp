@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -f config.status ]; then
+	make maintainer-clean
+fi
+
+autoreconf -if && \
+    ./configure --enable-maintainer-mode \
+		--disable-optimization \
+		--enable-debug \
+		--enable-werror $*

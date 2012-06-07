@@ -1,0 +1,66 @@
+TODO:
+-----
+
+* Logging mechanism (Mark Ryan) 26/04/2012
+
+  renderer-service-upnp is badly in need of a logging mechanism that
+  can be switched on and off.
+
+
+* Remove request bottleneck (Mark Ryan) 26/04/2012
+
+ All requests from all clients are placed in a queue upon reception
+ and their execution is serialized.  This was done initially to keep
+ things simple and easy to debug but it introduces an unnecessary
+ bottleneck which could become apparent when there are multiple
+ clients.  This is unfortunate as the whole raison d'etre for
+ renderer-service UPNP is to efficiently support multiple control
+ points.
+
+ For example let's suppose client 1 sends a request to server 1 and
+ client 2 sends a request to server 2.  Under the current
+ implementation client 2's request is not sent to server 2 until
+ client 1's request has completed.  This delay is unnecessary as
+ client 2's request can be sent before client 1's has completed,
+ without causing any problems.  How best to resolve this situation has
+ yet to be determined.  We could have a separate queue for each server
+ or simply no queues at all as servers should be able to handle
+ multiple simultaneous requests from the same control point.  Perhaps
+ both configurations might be possible.  The former may prove to be
+ useful in debugging.
+
+
+* Implement org.mpris.MediaPlayer2.Playlists (Mark Ryan) 26/04/2012
+
+
+* Implement org.mpris.MediaPlayer2.TrackList (Mark Ryan) 26/04/2012
+
+
+* Generate signals when a property changes (Mark Ryan) 26/04/2012
+
+ Currently no signal is generated when a renderer property changes.  This
+ is unfortunate as it prevents Digital Media Controllers from correctly
+ updating their user interfaces.  The code needs to be modified to issue
+ the org.freedesktop.DBus.Properties.PropertiesChanged signal when properties
+ change.
+
+
+* Implement the Volume property (Mark Ryan) 26/04/2012
+
+
+* Allow properties to be modified (Mark Ryan) 26/04/2012
+
+ Most of the MPRIS properties are read only.  Some however, such as
+ Rate and Volume can be modified by clients.  Currently, however, all
+ properties in renderer-service-upnp are read only.
+
+
+* Add DLNA headers to hosted files (Mark Ryan) 26/04/2012
+
+ DLNA headers need to be added to files hosted by renderer-service-upnp.
+ I'm think specifically of contentFeatures.dlna.org here.
+
+
+* System Bus (Mark Ryan) 26/04/2012
+
+ Is the session bus the right bus for us?

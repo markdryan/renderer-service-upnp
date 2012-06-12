@@ -24,19 +24,19 @@
 #include <config.h>
 #endif
 
+#include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <sys/signalfd.h>
-#include <signal.h>
 #include <syslog.h>
-#include <stdio.h>
+#include <sys/signalfd.h>
 
+#include "error.h"
+#include "prop-defs.h"
 #include "task.h"
 #include "upnp.h"
-#include "prop-defs.h"
-#include "error.h"
 
 #define RSU_INTERFACE_GET_VERSION "GetVersion"
 #define RSU_INTERFACE_GET_SERVERS "GetServers"

@@ -29,12 +29,12 @@
 #include <libgupnp/gupnp-context-manager.h>
 #include <libgupnp/gupnp-error.h>
 
-#include "upnp.h"
-#include "prop-defs.h"
-#include "error.h"
 #include "async.h"
 #include "device.h"
+#include "error.h"
 #include "host-service.h"
+#include "prop-defs.h"
+#include "upnp.h"
 
 struct rsu_upnp_t_ {
 	GDBusConnection *connection;

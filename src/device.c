@@ -24,14 +24,14 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include <libgupnp/gupnp-control-point.h>
 #include <libgupnp-av/gupnp-av.h>
 
-#include <string.h>
-
+#include "async.h"
 #include "device.h"
 #include "error.h"
-#include "async.h"
 #include "prop-defs.h"
 
 typedef void (*rsu_device_local_cb_t)(rsu_async_cb_data_t *cb_data);

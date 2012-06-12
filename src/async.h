@@ -25,9 +25,9 @@
 
 #include <libgupnp/gupnp-control-point.h>
 
+#include "device.h"
 #include "task.h"
 #include "upnp.h"
-#include "device.h"
 
 typedef struct rsu_async_cb_data_t_ rsu_async_cb_data_t;
 struct rsu_async_cb_data_t_ {

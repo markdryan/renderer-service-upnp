@@ -23,11 +23,11 @@
 #ifndef RSU_DEVICE_H__
 #define RSU_DEVICE_H__
 
-#include <glib.h>
 #include <gio/gio.h>
+#include <glib.h>
 
-#include "upnp.h"
 #include "host-service.h"
+#include "upnp.h"
 
 typedef struct rsu_device_t_ rsu_device_t;
 

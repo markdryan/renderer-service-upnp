@@ -24,13 +24,13 @@
 #include <config.h>
 #endif
 
-#include <libsoup/soup.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <libsoup/soup.h>
 
-#include "host-service.h"
 #include "error.h"
+#include "host-service.h"
 
 #define HOST_SERVICE_ROOT "/rendererserviceupnp"
 

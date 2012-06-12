@@ -52,6 +52,16 @@ sudo apt-get install libgupnp-1.0-dev
 sudo apt-get install libgupnp-av-1.0-dev
 sudo apt-get install libgssdp-1.0-dev
 
+The development version of d-Bus is also required.  This can be
+installed on Ubuntu by typing:
+
+sudo apt-get install libdbus-1-dev
+
+Although renderer-service-upnp does not link against the d-Bus libraries,
+the development version of this package is required by its build
+system to determine where to install the .service files.
+
+
 Working with the source code repository
 ---------------------------------------
 

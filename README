@@ -69,7 +69,7 @@ Renderer-service-upnp can be downloaded, compiled and installed as
 follows:
 
    Clone repository
-     # git clone https://github.com/01org/renderer-service-upnp.git
+     # git clone git://github.com/01org/renderer-service-upnp.git
      # cd renderer-service-upnp
 
    Configure and build

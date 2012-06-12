@@ -20,7 +20,9 @@
  *
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <libgupnp/gupnp-control-point.h>
 #include <libgupnp-av/gupnp-av.h>

@@ -23,6 +23,8 @@
 #ifndef RSU_ERROR_H__
 #define RSU_ERROR_H__
 
+#include <glib.h>
+
 enum rsu_error_t_ {
 	RSU_ERROR_BAD_PATH,
 	RSU_ERROR_OBJECT_NOT_FOUND,

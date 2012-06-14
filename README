@@ -1,7 +1,7 @@
 Introduction:
 -------------
 
-Renderer-service-upnp is a high level media content API that allows
+Renderer-service-upnp is a high level d-Bus API that allows
 client applications to discover and manipulate UPNP and DLNA media
 renderers.  Renderer-service-upnp is a d-Bus service implemented on
 top of the GUPnP libraries.  It is designed to facilitate the creation

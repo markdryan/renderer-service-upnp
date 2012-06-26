@@ -85,7 +85,7 @@ static void prv_service_proxies_free(rsu_service_proxies_t *service_proxies)
 
 static void prv_rsu_context_delete(gpointer context)
 {
-	rsu_context_t *ctx = context;
+	rsu_device_context_t *ctx = context;
 	rsu_service_proxies_t *service_proxies;
 
 	if (ctx) {
@@ -148,7 +148,7 @@ static void prv_merge_meta_data(rsu_device_t *device, const gchar *key,
 static void prv_context_new(const gchar *ip_address,
 			    GUPnPDeviceProxy *proxy,
 			    rsu_device_t *device,
-			    rsu_context_t **context)
+			    rsu_device_context_t **context)
 {
 	const gchar *cm_type =
 		"urn:schemas-upnp-org:service:ConnectionManager";
@@ -156,7 +156,7 @@ static void prv_context_new(const gchar *ip_address,
 		"urn:schemas-upnp-org:service:AVTransport";
 	const gchar *rc_type =
 		"urn:schemas-upnp-org:service:RenderingControl";
-	rsu_context_t *ctx = g_new(rsu_context_t, 1);
+	rsu_device_context_t *ctx = g_new(rsu_device_context_t, 1);
 	rsu_service_proxies_t *service_proxies = &ctx->service_proxies;
 
 	ctx->ip_address = g_strdup(ip_address);
@@ -193,7 +193,7 @@ void rsu_device_append_new_context(rsu_device_t *device,
 				   const gchar *ip_address,
 				   GUPnPDeviceProxy *proxy)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 
 	prv_context_new(ip_address, proxy, device, &context);
 	g_ptr_array_add(device->contexts, context);
@@ -283,9 +283,9 @@ rsu_device_t *rsu_device_from_path(const gchar *path, GHashTable *device_list)
 	return retval;
 }
 
-rsu_context_t *rsu_device_get_context(rsu_device_t *device)
+rsu_device_context_t *rsu_device_get_context(rsu_device_t *device)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	unsigned int i;
 	const char ip4_local_prefix[] = "127.0.0.";
 
@@ -921,7 +921,7 @@ on_error:
 static void prv_get_position_info(GCancellable *cancellable,
 				  rsu_async_cb_data_t *cb_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 
 	context = rsu_device_get_context(cb_data->device);
 
@@ -944,7 +944,7 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 {
 	GVariant *val;
 	GUPnPDeviceInfo *info;
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_props_t *props = &device->props;
 	gchar *friendly_name;
 
@@ -1103,7 +1103,7 @@ void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 		     rsu_upnp_task_complete_t cb,
 		     void *user_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 
 	context = rsu_device_get_context(device);
@@ -1148,7 +1148,7 @@ static void prv_simple_command(rsu_device_t *device, rsu_task_t *task,
 			       rsu_upnp_task_complete_t cb,
 			       void *user_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 
 	context = rsu_device_get_context(device);
@@ -1210,7 +1210,7 @@ void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
 			 rsu_upnp_task_complete_t cb,
 			 void *user_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_open_uri_t *open_uri_data = &task->open_uri;
 
@@ -1243,7 +1243,7 @@ static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 				    rsu_upnp_task_complete_t cb,
 				    void *user_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_seek_t *seek_data = &task->seek;
 	gchar *position;
@@ -1299,7 +1299,7 @@ void rsu_device_host_uri(rsu_device_t *device, rsu_task_t *task,
 			 rsu_upnp_task_complete_t cb,
 			 void *user_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_host_uri_t *host_uri = &task->host_uri;
 	gchar *url;
@@ -1328,7 +1328,7 @@ void rsu_device_remove_uri(rsu_device_t *device, rsu_task_t *task,
 			   rsu_upnp_task_complete_t cb,
 			   void *user_data)
 {
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_host_uri_t *host_uri = &task->host_uri;
 

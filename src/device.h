@@ -38,8 +38,8 @@ struct rsu_service_proxies_t_ {
 	GUPnPServiceProxy *rc_proxy;
 };
 
-typedef struct rsu_context_t_ rsu_context_t;
-struct rsu_context_t_ {
+typedef struct rsu_device_context_t_ rsu_device_context_t;
+struct rsu_device_context_t_ {
 	gchar *ip_address;
 	GUPnPDeviceProxy *device_proxy;
 	rsu_service_proxies_t service_proxies;
@@ -76,7 +76,7 @@ void rsu_device_append_new_context(rsu_device_t *device,
 				   const gchar *ip_address,
 				   GUPnPDeviceProxy *proxy);
 rsu_device_t *rsu_device_from_path(const gchar *path, GHashTable *device_list);
-rsu_context_t *rsu_device_get_context(rsu_device_t *device);
+rsu_device_context_t *rsu_device_get_context(rsu_device_t *device);
 
 void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 			GCancellable *cancellable,

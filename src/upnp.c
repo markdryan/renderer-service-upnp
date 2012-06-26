@@ -56,7 +56,7 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	const char *udn;
 	rsu_device_t *device;
 	const gchar *ip_address;
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 	unsigned int i;
 
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
@@ -107,7 +107,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	rsu_device_t *device;
 	const gchar *ip_address;
 	unsigned int i;
-	rsu_context_t *context;
+	rsu_device_context_t *context;
 
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
 	if (!udn)

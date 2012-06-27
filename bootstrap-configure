@@ -6,6 +6,8 @@ fi
 
 autoreconf -if && \
     ./configure --enable-maintainer-mode \
+		--enable-silent-rules \
 		--disable-optimization \
 		--enable-debug \
-		--enable-werror $*
+		--enable-werror \
+		--with-log=8 $*

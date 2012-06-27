@@ -1,20 +1,34 @@
+INCLUDES = -DG_LOG_DOMAIN=\"RSU\"
+
+if DEBUG
+DEBUG_CFLAGS = -DDEBUG
+endif
+
+AM_CFLAGS = \
+		$(DEBUG_CFLAGS) \
+		$(LOG_CFLAGS)
+
+ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
+
 rendererservice_sources = \
-		src/renderer-service-upnp.c \
-		src/error.c \
-		src/task.c \
-		src/upnp.c \
 		src/async.c \
 		src/device.c \
-		src/host-service.c
+		src/error.c \
+		src/host-service.c \
+		src/log.c \
+		src/renderer-service-upnp.c \
+		src/task.c \
+		src/upnp.c
 
 rendererservice_headers = \
-		src/error.h \
-		src/task.h \
-		src/upnp.h \
 		src/async.h \
 		src/device.h \
+		src/error.h \
+		src/host-service.h \
+		src/log.h \
 		src/prop-defs.h \
-		src/host-service.h
+		src/task.h \
+		src/upnp.h
 
 bin_PROGRAMS = renderer-service-upnp
 renderer_service_upnp_SOURCES = $(rendererservice_headers) $(rendererservice_sources)

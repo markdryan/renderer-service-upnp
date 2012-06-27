@@ -1,6 +1,3 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
-
 AC_PREREQ([2.66])
 
 AC_INIT([renderer-service-upnp],
@@ -19,8 +16,9 @@ AC_PREFIX_DEFAULT(/usr/local)
 AM_INIT_AUTOMAKE([subdir-objects])
 
 AM_MAINTAINER_MODE
+AM_SILENT_RULES
 
-COMPILER_FLAGS
+RSU_COMPILER_FLAGS
 
 # Checks for languages.
 AC_LANG_C
@@ -31,7 +29,6 @@ AM_PROG_CC_C_O
 AC_PROG_MKDIR_P
 
 # Checks for libraries.
-
 PKG_PROG_PKG_CONFIG(0.16)
 PKG_CHECK_MODULES([DBUS], [dbus-1])
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.26.1])
@@ -53,6 +50,27 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset strchr strrchr strstr])
 
+# Define Log Level values
+LOG_LEVEL_0=0x00
+LOG_LEVEL_1=0x01
+LOG_LEVEL_2=0x02
+LOG_LEVEL_3=0x04
+LOG_LEVEL_4=0x08
+LOG_LEVEL_5=0x10
+LOG_LEVEL_6=0x20
+LOG_LEVEL_7=0x13
+LOG_LEVEL_8=0x3F
+
+LOG_CFLAGS=-DRSU_LOG_LEVEL=${LOG_LEVEL_7}
+AC_SUBST([LOG_CFLAGS])
+
+AC_DEFINE_UNQUOTED([LOG_LEVEL_ERROR],    [${LOG_LEVEL_1}], [Log level flag for errors])
+AC_DEFINE_UNQUOTED([LOG_LEVEL_CRITICAL], [${LOG_LEVEL_2}], [Log level flag for critical messages])
+AC_DEFINE_UNQUOTED([LOG_LEVEL_WARNING],  [${LOG_LEVEL_3}], [Log level flag for warnings])
+AC_DEFINE_UNQUOTED([LOG_LEVEL_MESSAGE],  [${LOG_LEVEL_4}], [Log level flag for messages])
+AC_DEFINE_UNQUOTED([LOG_LEVEL_INFO],     [${LOG_LEVEL_5}], [Log level flag for informational messages])
+AC_DEFINE_UNQUOTED([LOG_LEVEL_DEBUG],    [${LOG_LEVEL_6}], [Log level flag for debug messages])
+
 
 AC_ARG_ENABLE(debug,
 		AS_HELP_STRING(
@@ -65,6 +83,8 @@ AS_CASE("${enable_debug}",
 	[yes], [CFLAGS="$CFLAGS -g"],
 	[no], [],
 	[AC_MSG_ERROR([bad value ${enable_debug} for --enable-debug])])
+
+AM_CONDITIONAL([DEBUG], [test x$enable_debug = xyes])
 
 
 AC_ARG_ENABLE(werror,
@@ -92,6 +112,20 @@ AS_CASE("${enable_optimization}",
 	[no], [CFLAGS="$CFLAGS -O0"; disable_optimization=yes],
 	[AC_MSG_ERROR([bad value ${enable_optimization} for --enable-werror])])
 
+
+AC_ARG_WITH(log,
+		AS_HELP_STRING(
+			[--with-log],
+			[enable logging information (0,1..6,7,8)\
+			 0=disabled \
+			 7=default (=1,2,5) \
+			 8=all (=1,2,3,4,5,6) \
+			 1,..,6=a comma separated list of log level\
+			]),
+		[],
+		[with_log=7])
+
+RSU_LOG_CHECK([${with_log}])
 
 DBUS_SESSION_DIR=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
 AC_SUBST(DBUS_SESSION_DIR)
@@ -128,6 +162,7 @@ ${PACKAGE_NAME} Version ${PACKAGE_VERSION}
 
 Prefix  : '${prefix}'.
 Compiler: '${CC} ${CFLAGS} ${CPPFLAGS}'
+Log flag: '${LOG_CFLAGS}'
 
 -Package features:
 	- enable-werror       : ${enable_werror}

@@ -41,7 +41,7 @@ enum rsu_error_t_ {
 	RSU_ERROR_BAD_MIME,
 	RSU_ERROR_HOST_FAILED
 };
-typedef enum rsu_error_ rsu_error_t;
+typedef enum rsu_error_t_ rsu_error_t;
 
 #define RSU_ERROR (rsu_error_quark())
 GQuark rsu_error_quark(void);

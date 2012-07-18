@@ -67,8 +67,8 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for error messages
  */
-#if RSU_LOG_LEVEL & LOG_LEVEL_ERROR
-	#ifdef DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_ERROR
+	#ifdef RSU_DEBUG_ENABLED
 		#define RSU_LOG_ERROR(fmt, ...) \
 			do { \
 				rsu_log_error("%s:%s() " fmt, __FILE__, \
@@ -87,8 +87,8 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for critical messages
  */
-#if RSU_LOG_LEVEL & LOG_LEVEL_CRITICAL
-	#ifdef DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_CRITICAL
+	#ifdef RSU_DEBUG_ENABLED
 		#define RSU_LOG_CRITICAL(fmt, ...) \
 			do { \
 				rsu_log_critical("%s:%s() " fmt, __FILE__, \
@@ -107,8 +107,8 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for warning messages
  */
-#if RSU_LOG_LEVEL & LOG_LEVEL_WARNING
-	#ifdef DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_WARNING
+	#ifdef RSU_DEBUG_ENABLED
 		#define RSU_LOG_WARNING(fmt, ...) \
 			do { \
 				rsu_log_warning("%s:%s() " fmt, __FILE__, \
@@ -127,8 +127,8 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for messages
  */
-#if RSU_LOG_LEVEL & LOG_LEVEL_MESSAGE
-	#ifdef DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_MESSAGE
+	#ifdef RSU_DEBUG_ENABLED
 		#define RSU_LOG_MESSAGE(fmt, ...) \
 			do { \
 				rsu_log_message("%s:%s() " fmt, __FILE__, \
@@ -147,8 +147,8 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for informational messages
  */
-#if RSU_LOG_LEVEL & LOG_LEVEL_INFO
-	#ifdef DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_INFO
+	#ifdef RSU_DEBUG_ENABLED
 		#define RSU_LOG_INFO(fmt, ...) \
 			do { \
 				rsu_log_info("%s:%s() " fmt, __FILE__, \
@@ -167,8 +167,8 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for debug messages
  */
-#if RSU_LOG_LEVEL & LOG_LEVEL_DEBUG
-	#ifdef DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
+	#ifdef RSU_DEBUG_ENABLED
 		#define RSU_LOG_DEBUG(fmt, ...) \
 			do { \
 				rsu_log_debug("%s:%s() " fmt, __FILE__, \

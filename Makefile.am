@@ -1,16 +1,10 @@
 INCLUDES = -DG_LOG_DOMAIN=\"RSU\"
 
-if DEBUG
-DEBUG_CFLAGS = -DDEBUG
-endif
-
 AM_CFLAGS =	$(GLIB_CFLAGS)		\
 		$(GIO_CFLAGS)		\
 		$(GUPNP_CFLAGS)		\
 		$(GUPNPAV_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
-		$(DEBUG_CFLAGS)		\
-		$(LOG_CFLAGS)		\
 		-include config.h
 
 

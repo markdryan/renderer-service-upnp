@@ -74,7 +74,7 @@ AC_DEFUN([RSU_LOG_CHECK],
 
 	IFS=${old_IFS}
 
-	LOG_CFLAGS=-DRSU_LOG_LEVEL=$LOG_LEVEL
+	AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL],[${LOG_LEVEL}], [Log level flag for debug messages])
 
 	AC_MSG_RESULT([ok])
 ]

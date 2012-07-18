@@ -61,15 +61,12 @@ LOG_LEVEL_6=0x20
 LOG_LEVEL_7=0x13
 LOG_LEVEL_8=0x3F
 
-LOG_CFLAGS=-DRSU_LOG_LEVEL=${LOG_LEVEL_7}
-AC_SUBST([LOG_CFLAGS])
-
-AC_DEFINE_UNQUOTED([LOG_LEVEL_ERROR],    [${LOG_LEVEL_1}], [Log level flag for errors])
-AC_DEFINE_UNQUOTED([LOG_LEVEL_CRITICAL], [${LOG_LEVEL_2}], [Log level flag for critical messages])
-AC_DEFINE_UNQUOTED([LOG_LEVEL_WARNING],  [${LOG_LEVEL_3}], [Log level flag for warnings])
-AC_DEFINE_UNQUOTED([LOG_LEVEL_MESSAGE],  [${LOG_LEVEL_4}], [Log level flag for messages])
-AC_DEFINE_UNQUOTED([LOG_LEVEL_INFO],     [${LOG_LEVEL_5}], [Log level flag for informational messages])
-AC_DEFINE_UNQUOTED([LOG_LEVEL_DEBUG],    [${LOG_LEVEL_6}], [Log level flag for debug messages])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_ERROR],    [${LOG_LEVEL_1}], [Log level flag for errors])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_CRITICAL], [${LOG_LEVEL_2}], [Log level flag for critical messages])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_WARNING],  [${LOG_LEVEL_3}], [Log level flag for warnings])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_MESSAGE],  [${LOG_LEVEL_4}], [Log level flag for messages])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_INFO],     [${LOG_LEVEL_5}], [Log level flag for informational messages])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_DEBUG],    [${LOG_LEVEL_6}], [Log level flag for debug messages])
 
 
 AC_ARG_ENABLE(debug,
@@ -80,11 +77,11 @@ AC_ARG_ENABLE(debug,
 		[enable_debug=no])
 
 AS_CASE("${enable_debug}",
-	[yes], [CFLAGS="$CFLAGS -g"],
-	[no], [],
+	[yes],	[	CFLAGS="$CFLAGS -g";
+			AC_DEFINE_UNQUOTED([RSU_DEBUG_ENABLED],[1], [Compiling with debugging information enabled])
+		],
+	[no],	[],
 	[AC_MSG_ERROR([bad value ${enable_debug} for --enable-debug])])
-
-AM_CONDITIONAL([DEBUG], [test x$enable_debug = xyes])
 
 
 AC_ARG_ENABLE(werror,
@@ -162,7 +159,6 @@ ${PACKAGE_NAME} Version ${PACKAGE_VERSION}
 
 Prefix    : '${prefix}'.
 Compiler  : '${CC}'
-LOG FLAG  : '${LOG_CFLAGS}'
 CFLAGS    : '${CFLAGS}'
 
 -Package features:

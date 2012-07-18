@@ -37,32 +37,32 @@ static void prv_rsu_log_set_flags(rsu_log_t *log_context)
 	int mask = 0;
 	GLogLevelFlags flags = 0;
 
-	if (RSU_LOG_LEVEL & LOG_LEVEL_ERROR) {
+	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_ERROR) {
 		mask |= LOG_MASK(LOG_ERR);
 		flags |= G_LOG_LEVEL_ERROR;
 	}
 
-	if (RSU_LOG_LEVEL & LOG_LEVEL_CRITICAL) {
+	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_CRITICAL) {
 		mask |= LOG_MASK(LOG_CRIT);
 		flags |= G_LOG_LEVEL_CRITICAL;
 	}
 
-	if (RSU_LOG_LEVEL & LOG_LEVEL_WARNING) {
+	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_WARNING) {
 		mask |= LOG_MASK(LOG_WARNING);
 		flags |= G_LOG_LEVEL_WARNING;
 	}
 
-	if (RSU_LOG_LEVEL & LOG_LEVEL_MESSAGE) {
+	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_MESSAGE) {
 		mask |= LOG_MASK(LOG_NOTICE);
 		flags |= G_LOG_LEVEL_MESSAGE;
 	}
 
-	if (RSU_LOG_LEVEL & LOG_LEVEL_INFO) {
+	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_INFO) {
 		mask |= LOG_MASK(LOG_INFO);
 		flags |= G_LOG_LEVEL_INFO;
 	}
 
-	if (RSU_LOG_LEVEL & LOG_LEVEL_DEBUG) {
+	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG) {
 		mask |= LOG_MASK(LOG_DEBUG);
 		flags |= G_LOG_LEVEL_DEBUG;
 	}

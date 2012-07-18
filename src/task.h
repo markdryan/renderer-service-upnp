@@ -90,7 +90,7 @@ struct rsu_task_t_ {
 		rsu_task_open_uri_t open_uri;
 		rsu_task_host_uri_t host_uri;
 		rsu_task_seek_t seek;
-	};
+	} ut;
 };
 
 rsu_task_t *rsu_task_get_version_new(GDBusMethodInvocation *invocation);

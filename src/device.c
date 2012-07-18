@@ -303,7 +303,7 @@ rsu_device_context_t *rsu_device_get_context(rsu_device_t *device)
 
 static void prv_get_prop(rsu_async_cb_data_t *cb_data)
 {
-	rsu_task_get_prop_t *get_prop = &cb_data->task->get_prop;
+	rsu_task_get_prop_t *get_prop = &cb_data->task->ut.get_prop;
 	GVariant *res = NULL;
 
 	if (!strcmp(get_prop->interface_name, RSU_INTERFACE_SERVER)) {
@@ -351,7 +351,7 @@ static void prv_add_props(GHashTable *props, GVariantBuilder *vb)
 
 static void prv_get_props(rsu_async_cb_data_t *cb_data)
 {
-	rsu_task_get_props_t *get_props = &cb_data->task->get_props;
+	rsu_task_get_props_t *get_props = &cb_data->task->ut.get_props;
 	GVariantBuilder *vb;
 
 	vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
@@ -437,7 +437,7 @@ static void prv_add_actions(rsu_device_t *device, const gchar *actions)
 	GVariant *true_val;
 	GVariant *false_val;
 	gboolean play = FALSE;
-	gboolean pause = FALSE;
+	gboolean ppause = FALSE;
 	gboolean seek = FALSE;
 	gboolean next = FALSE;
 	gboolean previous = FALSE;
@@ -454,7 +454,7 @@ static void prv_add_actions(rsu_device_t *device, const gchar *actions)
 		if (!strcmp(parts[i], "Play"))
 			play = TRUE;
 		else if (!strcmp(parts[i], "Pause"))
-			pause = TRUE;
+			ppause = TRUE;
 		else if (!strcmp(parts[i], "Seek"))
 			seek = TRUE;
 		else if (!strcmp(parts[i], "Next"))
@@ -473,7 +473,7 @@ static void prv_add_actions(rsu_device_t *device, const gchar *actions)
 	g_hash_table_insert(device->props.player_props,
 			    RSU_INTERFACE_PROP_CAN_PLAY, val);
 
-	val = pause ? true_val : false_val;
+	val = ppause ? true_val : false_val;
 	g_variant_ref(val);
 	g_hash_table_insert(device->props.player_props,
 			    RSU_INTERFACE_PROP_CAN_PAUSE, val);
@@ -1007,7 +1007,7 @@ void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 			 void *user_data)
 {
 	rsu_async_cb_data_t *cb_data;
-	rsu_task_get_prop_t *get_prop = &task->get_prop;
+	rsu_task_get_prop_t *get_prop = &task->ut.get_prop;
 	rsu_device_data_t *device_cb_data;
 
 	/* Need to check to see if the property is RSU_INTERFACE_PROP_POSITION.
@@ -1016,7 +1016,7 @@ void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 
 	if ((!strcmp(get_prop->interface_name, RSU_INTERFACE_PLAYER) ||
 	     !strcmp(get_prop->interface_name, "")) &&
-	    (!strcmp(task->get_prop.prop_name, RSU_INTERFACE_PROP_POSITION))) {
+	    (!strcmp(task->ut.get_prop.prop_name, RSU_INTERFACE_PROP_POSITION))) {
 		/* Need to read the current position.  This property is not
 		   evented */
 
@@ -1046,7 +1046,7 @@ void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
 			      void *user_data)
 {
 	rsu_async_cb_data_t *cb_data;
-	rsu_task_get_props_t *get_props = &task->get_props;
+	rsu_task_get_props_t *get_props = &task->ut.get_props;
 	rsu_device_data_t *device_cb_data;
 
 	if (!device->props.synced)
@@ -1209,7 +1209,7 @@ void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
-	rsu_task_open_uri_t *open_uri_data = &task->open_uri;
+	rsu_task_open_uri_t *open_uri_data = &task->ut.open_uri;
 
 	context = rsu_device_get_context(device);
 	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
@@ -1242,7 +1242,7 @@ static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
-	rsu_task_seek_t *seek_data = &task->seek;
+	rsu_task_seek_t *seek_data = &task->ut.seek;
 	gchar *position;
 
 	context = rsu_device_get_context(device);
@@ -1298,7 +1298,7 @@ void rsu_device_host_uri(rsu_device_t *device, rsu_task_t *task,
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
-	rsu_task_host_uri_t *host_uri = &task->host_uri;
+	rsu_task_host_uri_t *host_uri = &task->ut.host_uri;
 	gchar *url;
 	GError *error = NULL;
 
@@ -1327,7 +1327,7 @@ void rsu_device_remove_uri(rsu_device_t *device, rsu_task_t *task,
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
-	rsu_task_host_uri_t *host_uri = &task->host_uri;
+	rsu_task_host_uri_t *host_uri = &task->ut.host_uri;
 
 	context = rsu_device_get_context(device);
 	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,

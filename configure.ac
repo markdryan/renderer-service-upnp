@@ -160,9 +160,10 @@ AS_ECHO(["-------------------------------------------------
 
 ${PACKAGE_NAME} Version ${PACKAGE_VERSION}
 
-Prefix  : '${prefix}'.
-Compiler: '${CC} ${CFLAGS} ${CPPFLAGS}'
-Log flag: '${LOG_CFLAGS}'
+Prefix    : '${prefix}'.
+Compiler  : '${CC}'
+LOG FLAG  : '${LOG_CFLAGS}'
+CFLAGS    : '${CFLAGS}'
 
 -Package features:
 	- enable-werror       : ${enable_werror}

@@ -75,19 +75,19 @@ static void prv_rsu_task_delete(rsu_task_t *task)
 {
 	switch (task->type) {
 	case RSU_TASK_GET_ALL_PROPS:
-		g_free(task->get_props.interface_name);
+		g_free(task->ut.get_props.interface_name);
 		break;
 	case RSU_TASK_GET_PROP:
-		g_free(task->get_prop.interface_name);
-		g_free(task->get_prop.prop_name);
+		g_free(task->ut.get_prop.interface_name);
+		g_free(task->ut.get_prop.prop_name);
 		break;
 	case RSU_TASK_OPEN_URI:
-		g_free(task->open_uri.uri);
+		g_free(task->ut.open_uri.uri);
 		break;
 	case RSU_TASK_HOST_URI:
 	case RSU_TASK_REMOVE_URI:
-		g_free(task->host_uri.uri);
-		g_free(task->host_uri.client);
+		g_free(task->ut.host_uri.uri);
+		g_free(task->ut.host_uri.client);
 		break;
 	default:
 		break;
@@ -124,11 +124,11 @@ rsu_task_t *rsu_task_get_prop_new(GDBusMethodInvocation *invocation,
 
 	task = prv_device_task_new(RSU_TASK_GET_PROP, invocation, path, "(v)");
 
-	g_variant_get(parameters, "(ss)", &task->get_prop.interface_name,
-		      &task->get_prop.prop_name);
+	g_variant_get(parameters, "(ss)", &task->ut.get_prop.interface_name,
+		      &task->ut.get_prop.prop_name);
 
-	g_strstrip(task->get_prop.interface_name);
-	g_strstrip(task->get_prop.prop_name);
+	g_strstrip(task->ut.get_prop.interface_name);
+	g_strstrip(task->ut.get_prop.prop_name);
 
 	return task;
 }
@@ -141,8 +141,8 @@ rsu_task_t *rsu_task_get_props_new(GDBusMethodInvocation *invocation,
 	task = prv_device_task_new(RSU_TASK_GET_ALL_PROPS, invocation, path,
 				   "(@a{sv})");
 
-	g_variant_get(parameters, "(s)", &task->get_props.interface_name);
-	g_strstrip(task->get_props.interface_name);
+	g_variant_get(parameters, "(s)", &task->ut.get_props.interface_name);
+	g_strstrip(task->ut.get_props.interface_name);
 
 	return task;
 }
@@ -189,7 +189,7 @@ rsu_task_t *rsu_task_seek_new(GDBusMethodInvocation *invocation,
 	rsu_task_t *task = prv_device_task_new(RSU_TASK_SEEK, invocation,
 					       path, NULL);
 
-	g_variant_get(parameters, "(x)", &task->seek.position);
+	g_variant_get(parameters, "(x)", &task->ut.seek.position);
 
 	return task;
 }
@@ -202,7 +202,7 @@ rsu_task_t *rsu_task_set_position_new(GDBusMethodInvocation *invocation,
 	rsu_task_t *task = prv_device_task_new(RSU_TASK_SET_POSITION,
 					       invocation, path, NULL);
 
-	g_variant_get(parameters, "(&ox)", &track_id, &task->seek.position);
+	g_variant_get(parameters, "(&ox)", &track_id, &task->ut.seek.position);
 
 	return task;
 }
@@ -215,8 +215,8 @@ rsu_task_t *rsu_task_open_uri_new(GDBusMethodInvocation *invocation,
 	task = prv_device_task_new(RSU_TASK_OPEN_URI, invocation, path,
 				   NULL);
 
-	g_variant_get(parameters, "(s)", &task->open_uri.uri);
-	g_strstrip(task->open_uri.uri);
+	g_variant_get(parameters, "(s)", &task->ut.open_uri.uri);
+	g_strstrip(task->ut.open_uri.uri);
 
 	return task;
 }
@@ -230,9 +230,9 @@ rsu_task_t *rsu_task_host_uri_new(GDBusMethodInvocation *invocation,
 	task = prv_device_task_new(RSU_TASK_HOST_URI, invocation, path,
 				   "(@s)");
 
-	g_variant_get(parameters, "(s)", &task->host_uri.uri);
-	g_strstrip(task->host_uri.uri);
-	task->host_uri.client = g_strdup(
+	g_variant_get(parameters, "(s)", &task->ut.host_uri.uri);
+	g_strstrip(task->ut.host_uri.uri);
+	task->ut.host_uri.client = g_strdup(
 		g_dbus_method_invocation_get_sender(invocation));
 
 	return task;
@@ -246,9 +246,9 @@ rsu_task_t *rsu_task_remove_uri_new(GDBusMethodInvocation *invocation,
 
 	task = prv_device_task_new(RSU_TASK_REMOVE_URI, invocation, path, NULL);
 
-	g_variant_get(parameters, "(s)", &task->host_uri.uri);
-	g_strstrip(task->host_uri.uri);
-	task->host_uri.client = g_strdup(
+	g_variant_get(parameters, "(s)", &task->ut.host_uri.uri);
+	g_strstrip(task->ut.host_uri.uri);
+	task->ut.host_uri.client = g_strdup(
 		g_dbus_method_invocation_get_sender(invocation));
 
 	return task;

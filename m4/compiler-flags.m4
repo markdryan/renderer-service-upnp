@@ -21,8 +21,11 @@ dnl
 
 AC_DEFUN_ONCE([RSU_COMPILER_FLAGS], [
 	if (test x"${CFLAGS}" = x""); then
-		CFLAGS="-Wall -O2 -D_FORTIFY_SOURCE=2"
+		CFLAGS="-Wall"
+		CFLAGS+=" -O2"
+		CFLAGS+=" -D_FORTIFY_SOURCE=2"
 	fi
+
 	if (test x"$USE_MAINTAINER_MODE" = x"yes"); then
 		CFLAGS+=" -Wextra"
 		CFLAGS+=" -Wno-unused-parameter"
@@ -31,6 +34,19 @@ AC_DEFUN_ONCE([RSU_COMPILER_FLAGS], [
 		CFLAGS+=" -Wmissing-declarations"
 		CFLAGS+=" -Wredundant-decls"
 		CFLAGS+=" -Wcast-align"
+
+		CFLAGS+=" -Wstrict-prototypes"
+		CFLAGS+=" -Wmissing-prototypes"
+		CFLAGS+=" -Wnested-externs"
+		CFLAGS+=" -Wshadow"
+		CFLAGS+=" -Wformat=2"
+		CFLAGS+=" -Winit-self"
+
+		CFLAGS+=" -std=gnu99"
+		CFLAGS+=" -pedantic"
+		CFLAGS+=" -Wno-overlength-strings"
+		CFLAGS+=" -Wno-format-extra-args"
+
 		CFLAGS+=" -DG_DISABLE_DEPRECATED"
 	fi
 ])

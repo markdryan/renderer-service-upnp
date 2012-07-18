@@ -124,7 +124,7 @@ void rsu_log_finialize(rsu_log_t *log_context)
 	syslog(LOG_INFO, "Media Service UPnP: Exit");
 
 	if (log_context->log_type != RSU_LOG_TYPE_SYSLOG) {
-		RSU_LOG_INFO("Media Service UPnP: Exit");
+		RSU_LOG_INFO("%s", "Media Service UPnP: Exit");
 	}
 
 	(void) g_log_set_default_handler(log_context->old_handler, NULL);

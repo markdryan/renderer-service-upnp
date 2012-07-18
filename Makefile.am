@@ -10,7 +10,8 @@ AM_CFLAGS =	$(GLIB_CFLAGS)		\
 		$(GUPNPAV_CFLAGS)	\
 		$(SOUP_CFLAGS)		\
 		$(DEBUG_CFLAGS)		\
-		$(LOG_CFLAGS)
+		$(LOG_CFLAGS)		\
+		-include config.h
 
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}

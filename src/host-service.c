@@ -210,7 +210,8 @@ static void prv_soup_server_cb(SoupServer *server, SoupMessage *msg,
 	/* TODO: Need to add the relevant DLNA headers */
 
 /*	soup_message_headers_append(hdrs, "contentFeatures.dlna.org",
-				    "DLNA.ORG_PN=PNG_LRG;DLNA.ORG_OP=01;"DLNA.ORG_FLAGS=00f00000000000000000000000000000");
+			"DLNA.ORG_PN=PNG_LRG;DLNA.ORG_OP=01;"\
+			"DLNA.ORG_FLAGS=00f00000000000000000000000000000");
 	soup_message_headers_append(hdrs, "Connection", "close");
 */
 	soup_message_set_status(msg, SOUP_STATUS_OK);

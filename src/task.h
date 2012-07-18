@@ -26,7 +26,7 @@
 #include <gio/gio.h>
 #include <glib.h>
 
-enum rsu_task_type_t_{
+enum rsu_task_type_t_ {
 	RSU_TASK_GET_VERSION,
 	RSU_TASK_GET_SERVERS,
 	RSU_TASK_RAISE,

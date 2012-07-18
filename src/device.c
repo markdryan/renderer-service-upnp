@@ -89,11 +89,11 @@ static void prv_rsu_context_delete(gpointer context)
 		service_proxies = &ctx->service_proxies;
 
 		(void) gupnp_service_proxy_remove_notify(
-			service_proxies->cm_proxy ,"SinkProtocolInfo",
+			service_proxies->cm_proxy, "SinkProtocolInfo",
 			prv_sink_change_cb, ctx->device);
 
 		(void) gupnp_service_proxy_remove_notify(
-			service_proxies->av_proxy ,"LastChange",
+			service_proxies->av_proxy, "LastChange",
 			prv_last_change_cb, ctx->device);
 
 		g_free(ctx->ip_address);
@@ -638,7 +638,9 @@ static void prv_found_item(GUPnPDIDLLiteParser *parser,
 		g_variant_builder_add(vb, "{sv}", "xesam:genre", value);
 	}
 
-	head = artists = gupnp_didl_lite_object_get_artists(object);
+	artists = gupnp_didl_lite_object_get_artists(object);
+	head = artists;
+
 	if (artists) {
 		artists_vb = g_variant_builder_new(G_VARIANT_TYPE("as"));
 		album_artists_vb = g_variant_builder_new(G_VARIANT_TYPE("as"));
@@ -1016,7 +1018,8 @@ void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 
 	if ((!strcmp(get_prop->interface_name, RSU_INTERFACE_PLAYER) ||
 	     !strcmp(get_prop->interface_name, "")) &&
-	    (!strcmp(task->ut.get_prop.prop_name, RSU_INTERFACE_PROP_POSITION))) {
+	    (!strcmp(task->ut.get_prop.prop_name,
+			RSU_INTERFACE_PROP_POSITION))) {
 		/* Need to read the current position.  This property is not
 		   evented */
 

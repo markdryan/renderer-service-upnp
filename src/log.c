@@ -113,9 +113,8 @@ void rsu_log_init(const char *program, rsu_log_t *log_context)
 
 	s_log_context = log_context;
 
-	if (log_context->log_type != RSU_LOG_TYPE_SYSLOG) {
+	if (log_context->log_type != RSU_LOG_TYPE_SYSLOG)
 		RSU_LOG_INFO("Media Service UPnP version %s", VERSION);
-	}
 }
 
 void rsu_log_finialize(rsu_log_t *log_context)
@@ -123,9 +122,8 @@ void rsu_log_finialize(rsu_log_t *log_context)
 	(void) setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Media Service UPnP: Exit");
 
-	if (log_context->log_type != RSU_LOG_TYPE_SYSLOG) {
+	if (log_context->log_type != RSU_LOG_TYPE_SYSLOG)
 		RSU_LOG_INFO("%s", "Media Service UPnP: Exit");
-	}
 
 	(void) g_log_set_default_handler(log_context->old_handler, NULL);
 
@@ -146,10 +144,12 @@ void rsu_log_error(const char *format, ...)
 		vsyslog(LOG_ERR, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, format, args);
+		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, format, args);
 		break;
-	case RSU_LOG_TYPE_FILE:	break;
-	default: break;
+	case RSU_LOG_TYPE_FILE:
+		break;
+	default:
+		break;
 	}
 
 	va_end(args);
@@ -166,10 +166,12 @@ void rsu_log_critical(const char *format, ...)
 		vsyslog(LOG_CRIT, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, format, args);
+		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, format, args);
 		break;
-	case RSU_LOG_TYPE_FILE:	break;
-	default: break;
+	case RSU_LOG_TYPE_FILE:
+		break;
+	default:
+		break;
 	}
 
 	va_end(args);
@@ -186,10 +188,12 @@ void rsu_log_warning(const char *format, ...)
 		vsyslog(LOG_WARNING, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, format, args);
+		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, format, args);
 		break;
-	case RSU_LOG_TYPE_FILE:	break;
-	default: break;
+	case RSU_LOG_TYPE_FILE:
+		break;
+	default:
+		break;
 	}
 
 	va_end(args);
@@ -206,10 +210,12 @@ void rsu_log_message(const char *format, ...)
 		vsyslog(LOG_NOTICE, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, format, args);
+		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, format, args);
 		break;
-	case RSU_LOG_TYPE_FILE:	break;
-	default: break;
+	case RSU_LOG_TYPE_FILE:
+		break;
+	default:
+		break;
 	}
 
 	va_end(args);
@@ -226,10 +232,12 @@ void rsu_log_info(const char *format, ...)
 		vsyslog(LOG_INFO, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, format, args);
+		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, format, args);
 		break;
-	case RSU_LOG_TYPE_FILE:	break;
-	default: break;
+	case RSU_LOG_TYPE_FILE:
+		break;
+	default:
+		break;
 	}
 
 	va_end(args);
@@ -246,10 +254,12 @@ void rsu_log_debug(const char *format, ...)
 		vsyslog(LOG_DEBUG, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, format, args);
+		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, format, args);
 		break;
-	case RSU_LOG_TYPE_FILE:	break;
-	default: break;
+	case RSU_LOG_TYPE_FILE:
+		break;
+	default:
+		break;
 	}
 
 	va_end(args);

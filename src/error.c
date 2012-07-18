@@ -46,7 +46,7 @@ static const GDBusErrorEntry g_error_entries[] = {
 
 GQuark rsu_error_quark(void)
 {
-	static gsize quark = 0;
+	static gsize quark;
 	g_dbus_error_register_error_domain("mc-error-quark", &quark,
 					   g_error_entries,
 					   sizeof(g_error_entries) /

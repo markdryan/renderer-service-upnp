@@ -72,7 +72,7 @@ void rsu_log_debug(const char *format, ...)
 		#define RSU_LOG_ERROR(fmt, ...) \
 			do { \
 				rsu_log_error("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define RSU_LOG_ERROR(fmt, ...) \
@@ -92,7 +92,7 @@ void rsu_log_debug(const char *format, ...)
 		#define RSU_LOG_CRITICAL(fmt, ...) \
 			do { \
 				rsu_log_critical("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define RSU_LOG_CRITICAL(fmt, ...) \
@@ -112,7 +112,7 @@ void rsu_log_debug(const char *format, ...)
 		#define RSU_LOG_WARNING(fmt, ...) \
 			do { \
 				rsu_log_warning("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define RSU_LOG_WARNING(fmt, ...) \
@@ -132,7 +132,7 @@ void rsu_log_debug(const char *format, ...)
 		#define RSU_LOG_MESSAGE(fmt, ...) \
 			do { \
 				rsu_log_message("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define RSU_LOG_MESSAGE(fmt, ...) \
@@ -152,7 +152,7 @@ void rsu_log_debug(const char *format, ...)
 		#define RSU_LOG_INFO(fmt, ...) \
 			do { \
 				rsu_log_info("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define RSU_LOG_INFO(fmt, ...) \
@@ -172,7 +172,7 @@ void rsu_log_debug(const char *format, ...)
 		#define RSU_LOG_DEBUG(fmt, ...) \
 			do { \
 				rsu_log_debug("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define RSU_LOG_DEBUG(fmt, ...) \

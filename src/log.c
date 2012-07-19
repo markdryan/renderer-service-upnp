@@ -93,7 +93,7 @@ void rsu_log_init(const char *program, rsu_log_t *log_context)
 	int option = LOG_NDELAY | LOG_PID;
 	int old;
 
-#ifdef DEBUG
+#ifdef RSU_DEBUG_ENABLED
 	option |= LOG_PERROR | LOG_CONS;
 #endif
 

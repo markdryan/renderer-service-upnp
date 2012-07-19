@@ -81,7 +81,7 @@ static void prv_rsu_log_handler(const gchar *log_domain,
 {
 	rsu_log_t *log_context = (rsu_log_t *)(data);
 
-	if (strcmp(log_domain, G_LOG_DOMAIN))
+	if (g_strcmp0(log_domain, G_LOG_DOMAIN))
 		return;
 
 	if (log_context->flags & log_level)

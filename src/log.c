@@ -133,7 +133,7 @@ void rsu_log_finialize(rsu_log_t *log_context)
 	s_log_context = NULL;
 }
 
-void rsu_log_error(const char *format, ...)
+void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 {
 	va_list args;
 
@@ -141,120 +141,10 @@ void rsu_log_error(const char *format, ...)
 
 	switch (s_log_context->log_type) {
 	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_ERR, format, args);
+		vsyslog(priority, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, format, args);
-		break;
-	case RSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void rsu_log_critical(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_CRIT, format, args);
-		break;
-	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, format, args);
-		break;
-	case RSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void rsu_log_warning(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_WARNING, format, args);
-		break;
-	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, format, args);
-		break;
-	case RSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void rsu_log_message(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_NOTICE, format, args);
-		break;
-	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, format, args);
-		break;
-	case RSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void rsu_log_info(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_INFO, format, args);
-		break;
-	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, format, args);
-		break;
-	case RSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void rsu_log_debug(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_DEBUG, format, args);
-		break;
-	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, format, args);
+		g_logv(G_LOG_DOMAIN, flags, format, args);
 		break;
 	case RSU_LOG_TYPE_FILE:
 		break;

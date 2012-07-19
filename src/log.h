@@ -45,61 +45,41 @@ void rsu_log_init(const char *program, rsu_log_t *log_context);
 
 void rsu_log_finialize(rsu_log_t *log_context);
 
-void rsu_log_error(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
+void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
+			__attribute__((format(printf, 3, 4)));
 
-void rsu_log_critical(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
 
-void rsu_log_warning(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void rsu_log_message(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void rsu_log_info(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void rsu_log_debug(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
+/* Generic Logging macro
+ */
+#ifdef RSU_DEBUG_ENABLED
+	#define RSU_LOG_HELPER(priority, flags, fmt, ...)    \
+		do { \
+			rsu_log_trace(priority, flags, "%s : %s() --- " fmt, \
+				      __FILE__, __func__, ## __VA_ARGS__); \
+		} while (0)
+#else
+	#define RSU_LOG_HELPER(priority, flags, fmt, ...) \
+		do { \
+			rsu_log_trace(priority, flags, fmt, ## __VA_ARGS__); \
+		} while (0)
+#endif
 
 
 /* Logging macro for error messages
  */
-#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_ERROR
-	#ifdef RSU_DEBUG_ENABLED
-		#define RSU_LOG_ERROR(fmt, ...) \
-			do { \
-				rsu_log_error("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define RSU_LOG_ERROR(fmt, ...) \
-			do { \
-				rsu_log_error(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+#if RSU_LOG_LEVEL & RSU_MSU_LOG_LEVEL_ERROR
+	#define RSU_LOG_ERROR(...) \
+		RSU_LOG_HELPER(LOG_ERR, G_LOG_LEVEL_ERROR, __VA_ARGS__, 0)
 #else
-	#define RSU_LOG_ERROR(fmt, ...)
+	#define RSU_LOG_ERROR(...)
 #endif
 
 
 /* Logging macro for critical messages
  */
 #if RSU_LOG_LEVEL & RSU_LOG_LEVEL_CRITICAL
-	#ifdef RSU_DEBUG_ENABLED
-		#define RSU_LOG_CRITICAL(fmt, ...) \
-			do { \
-				rsu_log_critical("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define RSU_LOG_CRITICAL(fmt, ...) \
-			do { \
-				rsu_log_critical(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define RSU_LOG_CRITICAL(...) \
+		RSU_LOG_HELPER(LOG_CRIT, G_LOG_LEVEL_CRITICAL, __VA_ARGS__, 0)
 #else
 	#define RSU_LOG_CRITICAL(fmt, ...)
 #endif
@@ -108,18 +88,8 @@ void rsu_log_debug(const char *format, ...)
 /* Logging macro for warning messages
  */
 #if RSU_LOG_LEVEL & RSU_LOG_LEVEL_WARNING
-	#ifdef RSU_DEBUG_ENABLED
-		#define RSU_LOG_WARNING(fmt, ...) \
-			do { \
-				rsu_log_warning("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define RSU_LOG_WARNING(fmt, ...) \
-			do { \
-				rsu_log_warning(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define RSU_LOG_WARNING(...) \
+		RSU_LOG_HELPER(LOG_WARNING, G_LOG_LEVEL_WARNING, __VA_ARGS__, 0)
 #else
 	#define RSU_LOG_WARNING(fmt, ...)
 #endif
@@ -128,18 +98,8 @@ void rsu_log_debug(const char *format, ...)
 /* Logging macro for messages
  */
 #if RSU_LOG_LEVEL & RSU_LOG_LEVEL_MESSAGE
-	#ifdef RSU_DEBUG_ENABLED
-		#define RSU_LOG_MESSAGE(fmt, ...) \
-			do { \
-				rsu_log_message("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define RSU_LOG_MESSAGE(fmt, ...) \
-			do { \
-				rsu_log_message(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define RSU_LOG_MESSAGE(...) \
+		RSU_LOG_HELPER(LOG_NOTICE, G_LOG_LEVEL_MESSAGE, __VA_ARGS__, 0)
 #else
 	#define RSU_LOG_MESSAGE(fmt, ...)
 #endif
@@ -148,18 +108,8 @@ void rsu_log_debug(const char *format, ...)
 /* Logging macro for informational messages
  */
 #if RSU_LOG_LEVEL & RSU_LOG_LEVEL_INFO
-	#ifdef RSU_DEBUG_ENABLED
-		#define RSU_LOG_INFO(fmt, ...) \
-			do { \
-				rsu_log_info("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define RSU_LOG_INFO(fmt, ...) \
-			do { \
-				rsu_log_info(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define RSU_LOG_INFO(...) \
+		RSU_LOG_HELPER(LOG_INFO, G_LOG_LEVEL_INFO, __VA_ARGS__, 0)
 #else
 	#define RSU_LOG_INFO(fmt, ...)
 #endif
@@ -167,19 +117,9 @@ void rsu_log_debug(const char *format, ...)
 
 /* Logging macro for debug messages
  */
-#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
-	#ifdef RSU_DEBUG_ENABLED
-		#define RSU_LOG_DEBUG(fmt, ...) \
-			do { \
-				rsu_log_debug("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define RSU_LOG_DEBUG(fmt, ...) \
-			do { \
-				rsu_log_debug(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+#if RSU_LOG_LEVEL & RSU_MSU_LOG_LEVEL_DEBUG
+	#define RSU_LOG_DEBUG(...) \
+		RSU_LOG_HELPER(LOG_DEBUG, G_LOG_LEVEL_DEBUG, __VA_ARGS__, 0)
 #else
 	#define RSU_LOG_DEBUG(fmt, ...)
 #endif

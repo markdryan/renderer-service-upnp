@@ -884,7 +884,7 @@ int main(int argc, char *argv[])
 
 on_error:
 
-	rsu_log_finialize(&log_context);
+	rsu_log_finalize(&log_context);
 
 	prv_rsu_context_free(&context);
 

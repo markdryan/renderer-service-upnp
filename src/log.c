@@ -117,7 +117,7 @@ void rsu_log_init(const char *program, rsu_log_t *log_context)
 		RSU_LOG_INFO("Media Service UPnP version %s", VERSION);
 }
 
-void rsu_log_finialize(rsu_log_t *log_context)
+void rsu_log_finalize(rsu_log_t *log_context)
 {
 	(void) setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Media Service UPnP: Exit");

@@ -23,6 +23,8 @@
 #ifndef RSU_LOG_H__
 #define RSU_LOG_H__
 
+#include <syslog.h>
+
 #include <glib.h>
 
 enum rsu_log_type_t_ {
@@ -117,7 +119,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 /* Logging macro for debug messages
  */
-#if RSU_LOG_LEVEL & RSU_MSU_LOG_LEVEL_DEBUG
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
 	#define RSU_LOG_DEBUG(...) \
 		RSU_LOG_HELPER(LOG_DEBUG, G_LOG_LEVEL_DEBUG, __VA_ARGS__, 0)
 #else

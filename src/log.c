@@ -24,15 +24,12 @@
 #define _GNU_SOURCE
 #include <stdarg.h>
 #include <string.h>
-#include <syslog.h>
-
-#include <glib.h>
 
 #include "log.h"
 
 static rsu_log_t *s_log_context;
 
-static void prv_rsu_log_set_flags(rsu_log_t *log_context)
+static void prv_rsu_log_set_flags_from_param(rsu_log_t *log_context)
 {
 	int mask = 0;
 	GLogLevelFlags flags = 0;
@@ -72,6 +69,9 @@ static void prv_rsu_log_set_flags(rsu_log_t *log_context)
 
 	log_context->mask = mask;
 	log_context->flags = flags;
+
+	log_context->log_type = RSU_LOG_TYPE;
+
 }
 
 static void prv_rsu_log_handler(const gchar *log_domain,
@@ -98,7 +98,7 @@ void rsu_log_init(const char *program, rsu_log_t *log_context)
 #endif
 
 	memset(log_context, 0, sizeof(rsu_log_t));
-	prv_rsu_log_set_flags(log_context);
+	prv_rsu_log_set_flags_from_param(log_context);
 
 	openlog(basename(program), option, LOG_DAEMON);
 

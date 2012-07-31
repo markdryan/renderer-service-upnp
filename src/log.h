@@ -69,7 +69,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 /* Logging macro for error messages
  */
-#if RSU_LOG_LEVEL & RSU_MSU_LOG_LEVEL_ERROR
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_ERROR
 	#define RSU_LOG_ERROR(...) \
 		RSU_LOG_HELPER(LOG_ERR, G_LOG_LEVEL_ERROR, __VA_ARGS__, 0)
 #else

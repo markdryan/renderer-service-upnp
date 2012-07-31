@@ -830,7 +830,6 @@ static void prv_unregister_client(gpointer client)
 int main(int argc, char *argv[])
 {
 	rsu_context_t context;
-	rsu_log_t log_context;
 	sigset_t mask;
 	int retval = 1;
 
@@ -845,7 +844,7 @@ int main(int argc, char *argv[])
 
 	g_type_init();
 
-	rsu_log_init(argv[0], &log_context);
+	rsu_log_init(argv[0]);
 
 	context.root_node_info =
 		g_dbus_node_info_new_for_xml(g_rsu_root_introspection, NULL);
@@ -884,7 +883,7 @@ int main(int argc, char *argv[])
 
 on_error:
 
-	rsu_log_finalize(&log_context);
+	rsu_log_finalize();
 
 	prv_rsu_context_free(&context);
 

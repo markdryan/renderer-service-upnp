@@ -43,9 +43,9 @@ struct rsu_log_t_ {
 	GLogFunc old_handler;
 };
 
-void rsu_log_init(const char *program, rsu_log_t *log_context);
+void rsu_log_init(const char *program);
 
-void rsu_log_finalize(rsu_log_t *log_context);
+void rsu_log_finalize(void);
 
 void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 			__attribute__((format(printf, 3, 4)));

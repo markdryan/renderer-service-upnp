@@ -23,7 +23,7 @@ dnl
 AC_DEFUN([_RSU_LOG_LEVEL_CHECK_VALUE],
 [
 	AS_CASE($1,
-		[[[1-6]]], [AS_IF([test ${log_array[[${log_level}]]} -gt 1],
+		[[[1-6]]], [AS_IF([test ${log_array[[${log_level}]]} -ne 0],
 				[
 					AC_MSG_ERROR(["$1 should be set once"], 1)
 				],
@@ -33,7 +33,7 @@ AC_DEFUN([_RSU_LOG_LEVEL_CHECK_VALUE],
 				])
 			],
 
-		[0|7|8], [AS_IF([test ${log_level_count} -ne 1],
+		[0|7|8], [AS_IF([test ${log_level_count} -ne 0],
 				[
 					AC_MSG_ERROR(["$1 should be a unique value element"], 1)
 				])
@@ -64,12 +64,12 @@ AC_DEFUN([RSU_LOG_LEVEL_CHECK],
 
 	for log_level in $1
 	do
-		let log_level_count++
-		let log_array[[${log_level}]]++
-
 		IFS=${old_IFS}
 		_RSU_LOG_LEVEL_CHECK_VALUE([$log_level])
 		IFS=","
+
+		let log_level_count++
+		let log_array[[${log_level}]]++
 	done
 
 	IFS=${old_IFS}

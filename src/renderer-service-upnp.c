@@ -883,9 +883,9 @@ int main(int argc, char *argv[])
 
 on_error:
 
-	rsu_log_finalize();
-
 	prv_rsu_context_free(&context);
+
+	rsu_log_finalize();
 
 	return retval;
 }

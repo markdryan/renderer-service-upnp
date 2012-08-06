@@ -110,9 +110,9 @@ AS_CASE("${enable_optimization}",
 	[AC_MSG_ERROR([bad value ${enable_optimization} for --enable-werror])])
 
 
-AC_ARG_WITH(log,
+AC_ARG_WITH(log-level,
 		AS_HELP_STRING(
-			[--with-log],
+			[--with-log-level],
 			[enable logging information (0,1..6,7,8)\
 			 0=disabled \
 			 7=default (=1,2,5) \
@@ -120,9 +120,22 @@ AC_ARG_WITH(log,
 			 1,..,6=a comma separated list of log level\
 			]),
 		[],
-		[with_log=7])
+		[with_log_level=7])
 
-RSU_LOG_CHECK([${with_log}])
+RSU_LOG_LEVEL_CHECK([${with_log_level}])
+
+
+AC_ARG_WITH(log-type,
+		AS_HELP_STRING(
+			[--with-log-type],
+			[Select log output technology \
+			 0=syslog  1=GLib \
+			]),
+		[],
+		[with_log_type=0])
+
+RSU_LOG_TYPE_CHECK([${with_log_type}])
+
 
 DBUS_SESSION_DIR=`$PKG_CONFIG --variable=session_bus_services_dir dbus-1`
 AC_SUBST(DBUS_SESSION_DIR)

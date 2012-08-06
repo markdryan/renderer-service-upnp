@@ -10,4 +10,4 @@ autoreconf -if && \
 		--disable-optimization \
 		--enable-debug \
 		--enable-werror \
-		--with-log=8 $*
+		--with-log-level=8 $*

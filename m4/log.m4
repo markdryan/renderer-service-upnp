@@ -20,7 +20,7 @@ dnl Ludovic Ferrandis <ludovic.ferrandis@intel.com>
 dnl
 
 
-AC_DEFUN([_RSU_LOG_CHECK_VALUE],
+AC_DEFUN([_RSU_LOG_LEVEL_CHECK_VALUE],
 [
 	AS_CASE($1,
 		[[[1-6]]], [AS_IF([test ${log_array[[${log_level}]]} -gt 1],
@@ -49,9 +49,9 @@ AC_DEFUN([_RSU_LOG_CHECK_VALUE],
 ]
 )
 
-AC_DEFUN([RSU_LOG_CHECK],
+AC_DEFUN([RSU_LOG_LEVEL_CHECK],
 [
-	AC_MSG_CHECKING([for --with-log=$1])
+	AC_MSG_CHECKING([for --with-log-level=$1])
 
 	old_IFS=${IFS}
 	IFS=","
@@ -68,13 +68,29 @@ AC_DEFUN([RSU_LOG_CHECK],
 		let log_array[[${log_level}]]++
 
 		IFS=${old_IFS}
-		_RSU_LOG_CHECK_VALUE([$log_level])
+		_RSU_LOG_LEVEL_CHECK_VALUE([$log_level])
 		IFS=","
 	done
 
 	IFS=${old_IFS}
 
 	AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL],[${LOG_LEVEL}], [Log level flag for debug messages])
+
+	AC_MSG_RESULT([ok])
+]
+)
+
+AC_DEFUN([RSU_LOG_TYPE_CHECK],
+[
+	AC_MSG_CHECKING([for --with-log-type=$1])
+
+	AS_CASE($1,
+		[0|1], [],
+
+		[AC_MSG_ERROR(["$1 is not a valid value"], 1)]
+	)
+
+	AC_DEFINE_UNQUOTED([RSU_LOG_TYPE], [$1], [Define log output technolgy])
 
 	AC_MSG_RESULT([ok])
 ]

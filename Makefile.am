@@ -10,6 +10,8 @@ AM_CFLAGS =	$(GLIB_CFLAGS)		\
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
+sysconf_DATA = renderer-service-upnp.conf
+
 renderer_service_upnp_sources =	src/async.c			\
 				src/device.c			\
 				src/error.c			\
@@ -42,7 +44,8 @@ renderer_service_upnp_LDADD = $(GLIB_LIBS)	\
 dbussessiondir = @DBUS_SESSION_DIR@
 dbussession_DATA = src/com.intel.renderer-service-upnp.service
 
-EXTRA_DIST = test/cap.py
+EXTRA_DIST = test/cap.py \
+	     $(sysconf_DATA)
 
 MAINTAINERCLEANFILES =	Makefile.in		\
 			aclocal.m4		\

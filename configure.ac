@@ -61,12 +61,15 @@ LOG_LEVEL_6=0x20
 LOG_LEVEL_7=0x13
 LOG_LEVEL_8=0x3F
 
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_DISABLED], [${LOG_LEVEL_0}], [Log level flag for disabled messages])
 AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_ERROR],    [${LOG_LEVEL_1}], [Log level flag for errors])
 AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_CRITICAL], [${LOG_LEVEL_2}], [Log level flag for critical messages])
 AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_WARNING],  [${LOG_LEVEL_3}], [Log level flag for warnings])
 AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_MESSAGE],  [${LOG_LEVEL_4}], [Log level flag for messages])
 AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_INFO],     [${LOG_LEVEL_5}], [Log level flag for informational messages])
 AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_DEBUG],    [${LOG_LEVEL_6}], [Log level flag for debug messages])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_DEFAULT],  [${LOG_LEVEL_7}], [Log level flag to display default level messages])
+AC_DEFINE_UNQUOTED([RSU_LOG_LEVEL_ALL],      [${LOG_LEVEL_8}], [Log level flag for all messages])
 
 
 AC_ARG_ENABLE(debug,

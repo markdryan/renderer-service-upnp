@@ -34,18 +34,11 @@ enum rsu_log_type_t_ {
 };
 typedef enum rsu_log_type_t_ rsu_log_type_t;
 
-typedef struct rsu_log_t_ rsu_log_t;
-struct rsu_log_t_ {
-	int old_mask;
-	int mask;
-	rsu_log_type_t log_type;
-	GLogLevelFlags flags;
-	GLogFunc old_handler;
-};
-
 void rsu_log_init(const char *program);
 
 void rsu_log_finalize(void);
+
+void rsu_log_update_type_level(rsu_log_type_t log_type, int log_level);
 
 void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 			__attribute__((format(printf, 3, 4)));

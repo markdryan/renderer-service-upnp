@@ -1,10 +1,11 @@
 INCLUDES = -DG_LOG_DOMAIN=\"RSU\"
 
-AM_CFLAGS =	$(GLIB_CFLAGS)		\
-		$(GIO_CFLAGS)		\
-		$(GUPNP_CFLAGS)		\
-		$(GUPNPAV_CFLAGS)	\
-		$(SOUP_CFLAGS)		\
+AM_CFLAGS =	$(GLIB_CFLAGS)				\
+		$(GIO_CFLAGS)				\
+		$(GUPNP_CFLAGS)				\
+		$(GUPNPAV_CFLAGS)			\
+		$(SOUP_CFLAGS)				\
+		-DSYS_CONFIG_DIR="\"$(sysconfdir)\"" 	\
 		-include config.h
 
 
@@ -18,6 +19,7 @@ renderer_service_upnp_sources =	src/async.c			\
 				src/host-service.c		\
 				src/log.c			\
 				src/renderer-service-upnp.c	\
+				src/settings.c			\
 				src/task.c			\
 				src/upnp.c
 
@@ -27,6 +29,7 @@ renderer_service_upnp_headers =	src/async.h		\
 				src/host-service.h	\
 				src/log.h		\
 				src/prop-defs.h		\
+				src/settings.h		\
 				src/task.h		\
 				src/upnp.h
 

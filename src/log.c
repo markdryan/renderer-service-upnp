@@ -27,51 +27,94 @@
 
 #include "log.h"
 
+struct rsu_log_t_ {
+	int old_mask;
+	int mask;
+	rsu_log_type_t log_type;
+	GLogLevelFlags flags;
+	GLogFunc old_handler;
+};
+typedef struct rsu_log_t_ rsu_log_t;
+
 static rsu_log_t s_log_context;
 
-static void prv_rsu_log_set_flags_from_param(rsu_log_t *log_context)
+static void prv_rsu_log_get_mf(int log_level, int *mask, GLogLevelFlags *flags)
+{
+	*mask = 0;
+	*flags = 0;
+
+	if (log_level & RSU_LOG_LEVEL_ERROR) {
+		*mask |= LOG_MASK(LOG_ERR);
+		*flags |= G_LOG_LEVEL_ERROR;
+	}
+
+	if (log_level & RSU_LOG_LEVEL_CRITICAL) {
+		*mask |= LOG_MASK(LOG_CRIT);
+		*flags |= G_LOG_LEVEL_CRITICAL;
+	}
+
+	if (log_level & RSU_LOG_LEVEL_WARNING) {
+		*mask |= LOG_MASK(LOG_WARNING);
+		*flags |= G_LOG_LEVEL_WARNING;
+	}
+
+	if (log_level & RSU_LOG_LEVEL_MESSAGE) {
+		*mask |= LOG_MASK(LOG_NOTICE);
+		*flags |= G_LOG_LEVEL_MESSAGE;
+	}
+
+	if (log_level & RSU_LOG_LEVEL_INFO) {
+		*mask |= LOG_MASK(LOG_INFO);
+		*flags |= G_LOG_LEVEL_INFO;
+	}
+
+	if (log_level & RSU_LOG_LEVEL_DEBUG) {
+		*mask |= LOG_MASK(LOG_DEBUG);
+		*flags |= G_LOG_LEVEL_DEBUG;
+	}
+
+	if (*flags)
+		*flags |= G_LOG_FLAG_RECURSION | G_LOG_FLAG_FATAL;
+}
+
+static void prv_rsu_log_set_flags_from_param(void)
 {
 	int mask = 0;
 	GLogLevelFlags flags = 0;
 
-	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_ERROR) {
-		mask |= LOG_MASK(LOG_ERR);
-		flags |= G_LOG_LEVEL_ERROR;
-	}
+	prv_rsu_log_get_mf(RSU_LOG_LEVEL, &mask, &flags);
 
-	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_CRITICAL) {
-		mask |= LOG_MASK(LOG_CRIT);
-		flags |= G_LOG_LEVEL_CRITICAL;
-	}
+	s_log_context.mask = mask;
+	s_log_context.flags = flags;
+	s_log_context.log_type = RSU_LOG_TYPE;
+}
 
-	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_WARNING) {
-		mask |= LOG_MASK(LOG_WARNING);
-		flags |= G_LOG_LEVEL_WARNING;
-	}
+void rsu_log_update_type_level(rsu_log_type_t log_type, int log_level)
+{
+	int mask;
+	int compile_mask;
+	GLogLevelFlags flags;
+	GLogLevelFlags compile_flags;
 
-	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_MESSAGE) {
-		mask |= LOG_MASK(LOG_NOTICE);
-		flags |= G_LOG_LEVEL_MESSAGE;
-	}
+	s_log_context.log_type = log_type;
 
-	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_INFO) {
-		mask |= LOG_MASK(LOG_INFO);
-		flags |= G_LOG_LEVEL_INFO;
-	}
+	prv_rsu_log_get_mf(log_level, &mask, &flags);
+	prv_rsu_log_get_mf(RSU_LOG_LEVEL, &compile_mask, &compile_flags);
 
-	if (RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG) {
-		mask |= LOG_MASK(LOG_DEBUG);
-		flags |= G_LOG_LEVEL_DEBUG;
-	}
+	/* log level read from conf file is a subset of log level
+	 * set at compile time.
+	 * Only keep subset flags from compile flags */
 
-	if (flags)
-		flags |= G_LOG_FLAG_RECURSION | G_LOG_FLAG_FATAL;
+	mask &= compile_mask;
+	flags &= compile_flags;
 
-	log_context->mask = mask;
-	log_context->flags = flags;
+	RSU_LOG_INFO("Type [%d]-Level [0x%02X] - Mask [0x%02X]-Flags [0x%02X]",
+		     log_type, log_level, mask, flags);
 
-	log_context->log_type = RSU_LOG_TYPE;
+	s_log_context.mask = mask;
+	s_log_context.flags = flags;
 
+	(void) setlogmask(mask);
 }
 
 static void prv_rsu_log_handler(const gchar *log_domain,
@@ -97,8 +140,8 @@ void rsu_log_init(const char *program)
 	option |= LOG_PERROR | LOG_CONS;
 #endif
 
-	memset(&s_log_context, 0, sizeof(rsu_log_t));
-	prv_rsu_log_set_flags_from_param(&s_log_context);
+	memset(&s_log_context, 0, sizeof(s_log_context));
+	prv_rsu_log_set_flags_from_param();
 
 	openlog(basename(program), option, LOG_DAEMON);
 
@@ -130,7 +173,7 @@ void rsu_log_finalize(void)
 	(void) setlogmask(s_log_context.old_mask);
 	closelog();
 
-	memset(&s_log_context, 0, sizeof(rsu_log_t));
+	memset(&s_log_context, 0, sizeof(s_log_context));
 }
 
 void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
@@ -141,10 +184,12 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 	switch (s_log_context.log_type) {
 	case RSU_LOG_TYPE_SYSLOG:
-		vsyslog(priority, format, args);
+		if (s_log_context.mask)
+			vsyslog(priority, format, args);
 		break;
 	case RSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, flags, format, args);
+		if (s_log_context.flags)
+			g_logv(G_LOG_DOMAIN, flags, format, args);
 		break;
 	case RSU_LOG_TYPE_FILE:
 		break;

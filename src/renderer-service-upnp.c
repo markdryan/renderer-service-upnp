@@ -33,6 +33,7 @@
 #include "error.h"
 #include "log.h"
 #include "prop-defs.h"
+#include "settings.h"
 #include "task.h"
 #include "upnp.h"
 
@@ -830,6 +831,7 @@ static void prv_unregister_client(gpointer client)
 int main(int argc, char *argv[])
 {
 	rsu_context_t context;
+	rsu_settings_context_t settings;
 	sigset_t mask;
 	int retval = 1;
 
@@ -845,6 +847,7 @@ int main(int argc, char *argv[])
 	g_type_init();
 
 	rsu_log_init(argv[0]);
+	rsu_settings_init(&settings);
 
 	context.root_node_info =
 		g_dbus_node_info_new_for_xml(g_rsu_root_introspection, NULL);
@@ -882,6 +885,8 @@ int main(int argc, char *argv[])
 	retval = 0;
 
 on_error:
+
+	rsu_settings_finalize(&settings);
 
 	prv_rsu_context_free(&context);
 

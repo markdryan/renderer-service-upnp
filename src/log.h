@@ -126,4 +126,15 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define RSU_LOG_DEBUG(...)
 #endif
 
+/* Logging macro to display an empty line
+ */
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
+	#define RSU_LOG_DEBUG_NL() \
+		do { \
+			rsu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "\n"); \
+		} while (0)
+#else
+	#define RSU_LOG_DEBUG_NL()
+#endif
+
 #endif /* RSU_LOG_H__ */

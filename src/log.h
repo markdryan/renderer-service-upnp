@@ -83,7 +83,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define RSU_LOG_CRITICAL(...) \
 		RSU_LOG_HELPER(LOG_CRIT, G_LOG_LEVEL_CRITICAL, __VA_ARGS__, 0)
 #else
-	#define RSU_LOG_CRITICAL(fmt, ...)
+	#define RSU_LOG_CRITICAL(...)
 #endif
 
 
@@ -93,7 +93,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define RSU_LOG_WARNING(...) \
 		RSU_LOG_HELPER(LOG_WARNING, G_LOG_LEVEL_WARNING, __VA_ARGS__, 0)
 #else
-	#define RSU_LOG_WARNING(fmt, ...)
+	#define RSU_LOG_WARNING(...)
 #endif
 
 
@@ -103,7 +103,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define RSU_LOG_MESSAGE(...) \
 		RSU_LOG_HELPER(LOG_NOTICE, G_LOG_LEVEL_MESSAGE, __VA_ARGS__, 0)
 #else
-	#define RSU_LOG_MESSAGE(fmt, ...)
+	#define RSU_LOG_MESSAGE(...)
 #endif
 
 
@@ -113,7 +113,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define RSU_LOG_INFO(...) \
 		RSU_LOG_HELPER(LOG_INFO, G_LOG_LEVEL_INFO, __VA_ARGS__, 0)
 #else
-	#define RSU_LOG_INFO(fmt, ...)
+	#define RSU_LOG_INFO(...)
 #endif
 
 
@@ -123,7 +123,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define RSU_LOG_DEBUG(...) \
 		RSU_LOG_HELPER(LOG_DEBUG, G_LOG_LEVEL_DEBUG, __VA_ARGS__, 0)
 #else
-	#define RSU_LOG_DEBUG(fmt, ...)
+	#define RSU_LOG_DEBUG(...)
 #endif
 
 #endif /* RSU_LOG_H__ */

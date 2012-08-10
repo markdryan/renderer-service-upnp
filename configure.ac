@@ -113,6 +113,21 @@ AS_CASE("${enable_optimization}",
 	[AC_MSG_ERROR([bad value ${enable_optimization} for --enable-werror])])
 
 
+AC_ARG_ENABLE(never-quit,
+		AS_HELP_STRING(
+			[--enable-never-quit],
+			[Service doesn't quit when last client disconnects]),
+		[],
+		[enable_never_quit=no])
+
+AS_CASE("${enable_never_quit}",
+	[yes], [never_quit=true; NQ=TRUE],
+	[no], [never_quit=false; NQ=FALSE],
+	[AC_MSG_ERROR([bad value ${enable_never_quit} for --enable-never-quit])])
+
+AC_DEFINE_UNQUOTED([RSU_NEVER_QUIT], [${NQ}], [Default service behavior when last client disconnects])
+
+
 AC_ARG_WITH(log-level,
 		AS_HELP_STRING(
 			[--with-log-level],
@@ -181,6 +196,7 @@ CFLAGS    : '${CFLAGS}'
 	- enable-werror       : ${enable_werror}
 	- enable-debug        : ${enable_debug}
 	- disable-optimization: ${disable_optimization}
+	- enable-never-quit   : ${enable_never_quit}
 	- with-log-level      : ${with_log_level}
 	- with-log-type       : ${with_log_type}
 

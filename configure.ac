@@ -181,5 +181,7 @@ CFLAGS    : '${CFLAGS}'
 	- enable-werror       : ${enable_werror}
 	- enable-debug        : ${enable_debug}
 	- disable-optimization: ${disable_optimization}
+	- with-log-level      : ${with_log_level}
+	- with-log-type       : ${with_log_type}
 
 --------------------------------------------------"])

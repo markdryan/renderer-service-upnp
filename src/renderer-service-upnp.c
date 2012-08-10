@@ -523,7 +523,8 @@ static void prv_remove_client(rsu_context_t *context, const gchar *name)
 	(void) g_hash_table_remove(context->watchers, name);
 
 	if (g_hash_table_size(context->watchers) == 0)
-		prv_quit(context);
+		if (!rsu_settings_is_never_quit(&context->settings))
+			prv_quit(context);
 }
 
 static void prv_lost_client(GDBusConnection *connection, const gchar *name,

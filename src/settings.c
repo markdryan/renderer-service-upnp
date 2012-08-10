@@ -54,7 +54,6 @@ static void prv_rsu_settings_get_keyfile_path(gchar **sys_path,
 	const gchar *loc_dir;
 
 	if (sys_path != NULL) {
-		RSU_LOG_DEBUG("SYS_CONFIG_DIR [%s]", SYS_CONFIG_DIR);
 		*sys_path = NULL;
 
 		if (SYS_CONFIG_DIR && *SYS_CONFIG_DIR)
@@ -64,7 +63,6 @@ static void prv_rsu_settings_get_keyfile_path(gchar **sys_path,
 
 	if (loc_path != NULL) {
 		loc_dir =  g_get_user_config_dir();
-		RSU_LOG_DEBUG("LOC CONFIG DIR [%s]", loc_dir);
 		*loc_path = NULL;
 
 		if (loc_dir && *loc_dir)
@@ -78,9 +76,6 @@ static void prv_rsu_settings_check_local_keyfile(const gchar *sys_path,
 {
 	GFile *sys_file = NULL;
 	GFile *loc_file;
-	GError *error = NULL;
-
-	RSU_LOG_DEBUG("Checking and copying settings file");
 
 	loc_file = g_file_new_for_path(loc_path);
 
@@ -89,14 +84,8 @@ static void prv_rsu_settings_check_local_keyfile(const gchar *sys_path,
 
 	sys_file = g_file_new_for_path(sys_path);
 
-	if (!g_file_copy(sys_file, loc_file, G_FILE_COPY_TARGET_DEFAULT_PERMS,
-			 NULL, NULL, NULL, &error)) {
-		RSU_LOG_WARNING("Copy error from [%s] to [%s]: %s",
-				sys_path, loc_path, error->message);
-
-		g_error_free(error);
-	} else
-		RSU_LOG_INFO("Conf file has been copied in local");
+	(void) g_file_copy(sys_file, loc_file, G_FILE_COPY_TARGET_DEFAULT_PERMS,
+			   NULL, NULL, NULL, NULL);
 
 exit:
 	if (loc_file)
@@ -109,16 +98,11 @@ exit:
 static GKeyFile *prv_rsu_settings_load_keyfile(const gchar *filepath)
 {
 	GKeyFile *keyfile;
-	GError *error = NULL;
-
-	RSU_LOG_DEBUG("Keyfile [%s]", filepath);
 
 	keyfile = g_key_file_new();
 
-	if (!g_key_file_load_from_file(keyfile, filepath, 0, &error)) {
-		RSU_LOG_WARNING("Load [%s]: %s", filepath, error->message);
-
-		g_error_free(error);
+	if (!g_key_file_load_from_file(keyfile, filepath, G_KEY_FILE_NONE,
+					NULL)) {
 		g_key_file_free(keyfile);
 		keyfile = NULL;
 	}
@@ -167,7 +151,6 @@ static rsu_log_type_t prv_rsu_settings_to_log_type(int type)
 		log_type = RSU_LOG_TYPE_GLIB;
 		break;
 	default:
-		RSU_LOG_WARNING("Log Type [%d] not supported", type);
 		break;
 	}
 
@@ -190,9 +173,6 @@ static void prv_rsu_settings_read_keys(rsu_settings_context_t *settings)
 	if (error == NULL)
 		settings->never_quit = b_val;
 	else {
-		RSU_LOG_DEBUG("Load [%s/%s]: %s", RSU_SETTINGS_GROUP_GENERAL,
-						  RSU_SETTINGS_KEY_NEVER_QUIT,
-						  error->message);
 		g_error_free(error);
 		error = NULL;
 	}
@@ -204,9 +184,6 @@ static void prv_rsu_settings_read_keys(rsu_settings_context_t *settings)
 	if (error == NULL)
 		settings->log_type = prv_rsu_settings_to_log_type(int_val);
 	else {
-		RSU_LOG_DEBUG("Load [%s/%s]: %s", RSU_SETTINGS_GROUP_LOG,
-						  RSU_SETTINGS_KEY_LOG_TYPE,
-						  error->message);
 		g_error_free(error);
 		error = NULL;
 	}
@@ -223,9 +200,6 @@ static void prv_rsu_settings_read_keys(rsu_settings_context_t *settings)
 								     length);
 		g_free(int_star);
 	} else {
-		RSU_LOG_DEBUG("Load [%s/%s]: %s", RSU_SETTINGS_GROUP_LOG,
-						  RSU_SETTINGS_KEY_LOG_LEVEL,
-						  error->message);
 		g_error_free(error);
 		error = NULL;
 	}
@@ -326,15 +300,12 @@ static void prv_rsu_settings_monitor_local_keyfile(
 		rsu_settings_context_t *settings, const gchar *loc_path)
 {
 	GFile *loc_file;
-	GError *error = NULL;
 	GFileMonitor *monitor = NULL;
 	gulong handler_id;
 
-	RSU_LOG_DEBUG("Monitoring settings file");
-
 	loc_file = g_file_new_for_path(loc_path);
 	monitor = g_file_monitor_file(loc_file, G_FILE_MONITOR_SEND_MOVED, NULL,
-					&error);
+					NULL);
 	g_object_unref(loc_file);
 
 	if (monitor != NULL) {
@@ -344,10 +315,6 @@ static void prv_rsu_settings_monitor_local_keyfile(
 
 		settings->monitor = monitor;
 		settings->handler_id = handler_id;
-
-	} else {
-		RSU_LOG_WARNING("Monitoring failed: %s", error->message);
-		g_error_free(error);
 	}
 }
 

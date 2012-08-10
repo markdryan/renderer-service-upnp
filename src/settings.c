@@ -322,6 +322,11 @@ static void prv_rsu_settings_monitor_local_keyfile(
 	}
 }
 
+gboolean rsu_settings_is_never_quit(rsu_settings_context_t *settings)
+{
+	return settings->never_quit;
+}
+
 void rsu_settings_init(rsu_settings_context_t *settings)
 {
 	gchar *sys_path = NULL;

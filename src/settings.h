@@ -28,22 +28,9 @@
 
 #include "log.h"
 
-struct rsu_settings_context_t_ {
-	GKeyFile *keyfile;
-	GFileMonitor *monitor;
-	gulong handler_id;
-	guint ev_id;
-
-	/* Global section */
-	gboolean never_quit;
-
-	/* Log section */
-	rsu_log_type_t log_type;
-	int log_level;
-};
 typedef struct rsu_settings_context_t_ rsu_settings_context_t;
 
-void rsu_settings_init(rsu_settings_context_t *settings);
+void rsu_settings_init(rsu_settings_context_t **settings);
 void rsu_settings_finalize(rsu_settings_context_t *settings);
 
 gboolean rsu_settings_is_never_quit(rsu_settings_context_t *settings);

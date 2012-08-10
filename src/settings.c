@@ -24,6 +24,20 @@
 
 #include "settings.h"
 
+struct rsu_settings_context_t_ {
+	GKeyFile *keyfile;
+	GFileMonitor *monitor;
+	gulong handler_id;
+	guint ev_id;
+
+	/* Global section */
+	gboolean never_quit;
+
+	/* Log section */
+	rsu_log_type_t log_type;
+	int log_level;
+};
+
 #define RSU_SETTINGS_KEYFILE_NAME	"renderer-service-upnp.conf"
 
 #define RSU_SETTINGS_GROUP_GENERAL	"general"
@@ -327,26 +341,26 @@ gboolean rsu_settings_is_never_quit(rsu_settings_context_t *settings)
 	return settings->never_quit;
 }
 
-void rsu_settings_init(rsu_settings_context_t *settings)
+void rsu_settings_init(rsu_settings_context_t **settings)
 {
 	gchar *sys_path = NULL;
 	gchar *loc_path = NULL;
 
-	memset(settings, 0, sizeof(*settings));
-	prv_rsu_settings_init_default(settings);
+	*settings = g_malloc0(sizeof(**settings));
+	prv_rsu_settings_init_default(*settings);
 
 	prv_rsu_settings_get_keyfile_path(&sys_path, &loc_path);
 
 	if (loc_path) {
 		prv_rsu_settings_check_local_keyfile(sys_path, loc_path);
-		prv_rsu_settings_monitor_local_keyfile(settings, loc_path);
+		prv_rsu_settings_monitor_local_keyfile(*settings, loc_path);
 	}
 
 	if (sys_path || loc_path) {
-		prv_rsu_settings_keyfile_init(settings, sys_path, loc_path);
+		prv_rsu_settings_keyfile_init(*settings, sys_path, loc_path);
 	}
 
-	RSU_SETTINGS_LOG_KEYS(sys_path, loc_path, settings);
+	RSU_SETTINGS_LOG_KEYS(sys_path, loc_path, *settings);
 
 	g_free(sys_path);
 	g_free(loc_path);
@@ -364,4 +378,6 @@ void rsu_settings_finalize(rsu_settings_context_t *settings)
 	}
 
 	prv_rsu_settings_keyfile_finalize(settings);
+
+	g_free(settings);
 }

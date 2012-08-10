@@ -92,7 +92,7 @@ struct rsu_context_t_ {
 	GHashTable *watchers;
 	GCancellable *cancellable;
 	rsu_upnp_t *upnp;
-	rsu_settings_context_t settings;
+	rsu_settings_context_t *settings;
 };
 
 static const gchar g_rsu_root_introspection[] =
@@ -504,7 +504,8 @@ static void prv_rsu_context_free(rsu_context_t *context)
 	if (context->root_node_info)
 		g_dbus_node_info_unref(context->root_node_info);
 
-	rsu_settings_finalize(&context->settings);
+	if (context->settings)
+		rsu_settings_finalize(context->settings);
 }
 
 static void prv_quit(rsu_context_t *context)
@@ -523,7 +524,7 @@ static void prv_remove_client(rsu_context_t *context, const gchar *name)
 	(void) g_hash_table_remove(context->watchers, name);
 
 	if (g_hash_table_size(context->watchers) == 0)
-		if (!rsu_settings_is_never_quit(&context->settings))
+		if (!rsu_settings_is_never_quit(context->settings))
 			prv_quit(context);
 }
 

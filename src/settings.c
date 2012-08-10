@@ -33,6 +33,10 @@
 #define RSU_SETTINGS_KEY_LOG_TYPE	"log-type"
 #define RSU_SETTINGS_KEY_LOG_LEVEL	"log-level"
 
+#define RSU_SETTINGS_DEFAULT_NEVER_QUIT	FALSE
+#define RSU_SETTINGS_DEFAULT_LOG_TYPE	RSU_LOG_TYPE
+#define RSU_SETTINGS_DEFAULT_LOG_LEVEL	RSU_LOG_LEVEL
+
 #define RSU_SETTINGS_LOG_KEYS(sys, loc, settings) \
 do { \
        RSU_LOG_DEBUG_NL(); \
@@ -207,10 +211,10 @@ static void prv_rsu_settings_read_keys(rsu_settings_context_t *settings)
 
 static void prv_rsu_settings_init_default(rsu_settings_context_t *settings)
 {
-	settings->never_quit = FALSE;
+	settings->never_quit = RSU_SETTINGS_DEFAULT_NEVER_QUIT;
 
-	settings->log_type = RSU_LOG_TYPE;
-	settings->log_level = RSU_LOG_LEVEL;
+	settings->log_type = RSU_SETTINGS_DEFAULT_LOG_TYPE;
+	settings->log_level = RSU_SETTINGS_DEFAULT_LOG_LEVEL;
 }
 
 static void prv_rsu_settings_keyfile_init(rsu_settings_context_t *settings,

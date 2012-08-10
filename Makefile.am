@@ -63,8 +63,8 @@ MAINTAINERCLEANFILES =	Makefile.in		\
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = renderer-service-upnp.pc
 
-CLEANFILES = $(pkgconfig_DATA) $(dbussession_DATA)
-DISTCLEANFILES = $(pkgconfig_DATA) $(dbussession_DATA)
+CLEANFILES = $(pkgconfig_DATA) $(dbussession_DATA) renderer-service-upnp.conf
+DISTCLEANFILES = $(pkgconfig_DATA) $(dbussession_DATA) renderer-service-upnp.conf
 
 maintainer-clean-local:
 	rm -rf build-aux

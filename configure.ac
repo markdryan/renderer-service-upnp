@@ -177,10 +177,14 @@ AC_SUBST(RSU_INTERFACE_PUSH_HOST)
 AC_DEFINE([RSU_INTERFACE_PUSH_HOST], "com.intel.RendererServiceUPnP.PushHost",
 			       [d-Bus Name of renderer-service-upnp push host interface])
 
+AC_SUBST([never_quit])
+AC_SUBST([with_log_level])
+AC_SUBST([with_log_type])
 
 AC_CONFIG_FILES([Makefile \
 		 src/com.intel.renderer-service-upnp.service \
-		 renderer-service-upnp.pc])
+		 renderer-service-upnp.pc \
+		 renderer-service-upnp.conf])
 
 AC_OUTPUT
 

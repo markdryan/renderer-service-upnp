@@ -32,5 +32,6 @@ INSTALL
 
 src/com.intel.renderer-service-upnp.service
 renderer-service-upnp
+renderer-service-upnp.conf
 valgrind-ubuntu-11.10.supp
 

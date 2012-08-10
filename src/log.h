@@ -124,7 +124,7 @@ void rsu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 #if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
 	#define RSU_LOG_DEBUG_NL() \
 		do { \
-			rsu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "\n"); \
+			rsu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, " "); \
 		} while (0)
 #else
 	#define RSU_LOG_DEBUG_NL()

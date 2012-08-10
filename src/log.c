@@ -146,7 +146,7 @@ void rsu_log_init(const char *program)
 	openlog(basename(program), option, LOG_DAEMON);
 
 	old = setlogmask(LOG_MASK(LOG_INFO));
-	syslog(LOG_INFO, "Media Service UPnP version %s", VERSION);
+	syslog(LOG_INFO, "Renderer Service UPnP version %s", VERSION);
 	(void) setlogmask(s_log_context.mask);
 
 	s_log_context.old_mask = old;
@@ -155,17 +155,17 @@ void rsu_log_init(const char *program)
 					&s_log_context);
 
 	if (s_log_context.log_type != RSU_LOG_TYPE_SYSLOG) {
-		RSU_LOG_INFO("Media Service UPnP version %s", VERSION);
+		RSU_LOG_INFO("Renderer Service UPnP version %s", VERSION);
 	}
 }
 
 void rsu_log_finalize(void)
 {
 	(void) setlogmask(LOG_MASK(LOG_INFO));
-	syslog(LOG_INFO, "Media Service UPnP: Exit");
+	syslog(LOG_INFO, "Renderer Service UPnP: Exit");
 
 	if (s_log_context.log_type != RSU_LOG_TYPE_SYSLOG) {
-		RSU_LOG_INFO("Media Service UPnP: Exit");
+		RSU_LOG_INFO("Renderer Service UPnP: Exit");
 	}
 
 	(void) g_log_set_default_handler(s_log_context.old_handler, NULL);

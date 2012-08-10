@@ -33,6 +33,21 @@
 #define RSU_SETTINGS_KEY_LOG_TYPE	"log-type"
 #define RSU_SETTINGS_KEY_LOG_LEVEL	"log-level"
 
+#define RSU_SETTINGS_LOG_KEYS(sys, loc, settings) \
+do { \
+       RSU_LOG_DEBUG_NL(); \
+       RSU_LOG_INFO("Load file [%s]", loc ? loc : sys); \
+       RSU_LOG_DEBUG_NL(); \
+       RSU_LOG_DEBUG("[General settings]"); \
+       RSU_LOG_DEBUG("Never Quit: %s", (settings)->never_quit ? "T" : "F"); \
+       RSU_LOG_DEBUG_NL(); \
+       RSU_LOG_DEBUG("[Logging settings]"); \
+       RSU_LOG_DEBUG("Log Type : %d", (settings)->log_type); \
+       RSU_LOG_DEBUG("Log Level: 0x%02X", (settings)->log_level); \
+       RSU_LOG_DEBUG_NL(); \
+} while (0)
+
+
 static void prv_rsu_settings_get_keyfile_path(gchar **sys_path,
 					      gchar **loc_path)
 {
@@ -262,6 +277,8 @@ static void prv_rsu_settings_reload(rsu_settings_context_t *settings)
 	if (sys_path || loc_path)
 		prv_rsu_settings_keyfile_init(settings, sys_path, loc_path);
 
+	RSU_SETTINGS_LOG_KEYS(sys_path, loc_path, settings);
+
 	g_free(sys_path);
 	g_free(loc_path);
 }
@@ -352,6 +369,8 @@ void rsu_settings_init(rsu_settings_context_t *settings)
 	if (sys_path || loc_path) {
 		prv_rsu_settings_keyfile_init(settings, sys_path, loc_path);
 	}
+
+	RSU_SETTINGS_LOG_KEYS(sys_path, loc_path, settings);
 
 	g_free(sys_path);
 	g_free(loc_path);

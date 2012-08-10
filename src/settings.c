@@ -341,7 +341,7 @@ gboolean rsu_settings_is_never_quit(rsu_settings_context_t *settings)
 	return settings->never_quit;
 }
 
-void rsu_settings_init(rsu_settings_context_t **settings)
+void rsu_settings_new(rsu_settings_context_t **settings)
 {
 	gchar *sys_path = NULL;
 	gchar *loc_path = NULL;
@@ -366,7 +366,7 @@ void rsu_settings_init(rsu_settings_context_t **settings)
 	g_free(loc_path);
 }
 
-void rsu_settings_finalize(rsu_settings_context_t *settings)
+void rsu_settings_delete(rsu_settings_context_t *settings)
 {
 	if (settings->monitor) {
 		if (settings->handler_id)

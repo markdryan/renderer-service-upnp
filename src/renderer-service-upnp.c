@@ -505,7 +505,7 @@ static void prv_rsu_context_free(rsu_context_t *context)
 		g_dbus_node_info_unref(context->root_node_info);
 
 	if (context->settings)
-		rsu_settings_finalize(context->settings);
+		rsu_settings_delete(context->settings);
 }
 
 static void prv_quit(rsu_context_t *context)
@@ -851,7 +851,7 @@ int main(int argc, char *argv[])
 	g_type_init();
 
 	rsu_log_init(argv[0]);
-	rsu_settings_init(&context.settings);
+	rsu_settings_new(&context.settings);
 
 	context.root_node_info =
 		g_dbus_node_info_new_for_xml(g_rsu_root_introspection, NULL);

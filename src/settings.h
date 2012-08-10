@@ -30,8 +30,8 @@
 
 typedef struct rsu_settings_context_t_ rsu_settings_context_t;
 
-void rsu_settings_init(rsu_settings_context_t **settings);
-void rsu_settings_finalize(rsu_settings_context_t *settings);
+void rsu_settings_new(rsu_settings_context_t **settings);
+void rsu_settings_delete(rsu_settings_context_t *settings);
 
 gboolean rsu_settings_is_never_quit(rsu_settings_context_t *settings);
 

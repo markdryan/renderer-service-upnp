@@ -1,3 +1,11 @@
+version 0.0.2
+	- Control exit behaviour of RSU
+		https://github.com/01org/renderer-service-upnp/issues/18
+	- Added logging
+	- Added settings management
+	- Tidied up the build system and introduced maintainer mode
+
+
 version 0.0.1
 	- Initial version of renderer-service-upnp
 

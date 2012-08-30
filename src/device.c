@@ -88,13 +88,21 @@ static void prv_rsu_context_delete(gpointer context)
 	if (ctx) {
 		service_proxies = &ctx->service_proxies;
 
-		(void) gupnp_service_proxy_remove_notify(
-			service_proxies->cm_proxy, "SinkProtocolInfo",
-			prv_sink_change_cb, ctx->device);
+		if (ctx->timeout_id_cm)
+			(void) g_source_remove(ctx->timeout_id_cm);
+		if (ctx->timeout_id_av)
+			(void) g_source_remove(ctx->timeout_id_av);
 
-		(void) gupnp_service_proxy_remove_notify(
-			service_proxies->av_proxy, "LastChange",
-			prv_last_change_cb, ctx->device);
+		if (ctx->subscribed_cm) {
+			(void) gupnp_service_proxy_remove_notify(
+				service_proxies->cm_proxy, "SinkProtocolInfo",
+				prv_sink_change_cb, ctx->device);
+		}
+		if (ctx->subscribed_av) {
+			(void) gupnp_service_proxy_remove_notify(
+				service_proxies->av_proxy, "LastChange",
+				prv_last_change_cb, ctx->device);
+		}
 
 		g_free(ctx->ip_address);
 		if (ctx->device_proxy)
@@ -159,6 +167,8 @@ static void prv_context_new(const gchar *ip_address,
 	ctx->ip_address = g_strdup(ip_address);
 	ctx->device_proxy = proxy;
 	ctx->device = device;
+	ctx->subscribed_av = ctx->subscribed_cm = FALSE;
+	ctx->timeout_id_av = ctx->timeout_id_cm = 0;
 	g_object_ref(proxy);
 
 	service_proxies->cm_proxy = (GUPnPServiceProxy *)
@@ -168,17 +178,6 @@ static void prv_context_new(const gchar *ip_address,
 		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
 					      av_type);
 
-	gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy, TRUE);
-	(void) gupnp_service_proxy_add_notify(service_proxies->cm_proxy,
-					      "SinkProtocolInfo", G_TYPE_STRING,
-					      prv_sink_change_cb,
-					      device);
-
-	gupnp_service_proxy_set_subscribed(service_proxies->av_proxy, TRUE);
-	(void) gupnp_service_proxy_add_notify(service_proxies->av_proxy,
-					      "LastChange", G_TYPE_STRING,
-					      prv_last_change_cb,
-					      device);
 	service_proxies->rc_proxy = (GUPnPServiceProxy *)
 		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
 					      rc_type);
@@ -202,6 +201,9 @@ void rsu_device_delete(void *device)
 	rsu_device_t *dev = device;
 
 	if (dev) {
+		if (dev->timeout_id)
+			(void) g_source_remove(dev->timeout_id);
+
 		for (i = 0; i < RSU_INTERFACE_INFO_MAX && dev->ids[i]; ++i)
 			(void) g_dbus_connection_unregister_object(
 				dev->connection,
@@ -211,6 +213,105 @@ void rsu_device_delete(void *device)
 		prv_props_free(&dev->props);
 		g_free(dev);
 	}
+}
+
+static gboolean prv_re_enable_cm_subscription(gpointer user_data)
+{
+	rsu_device_context_t *context = user_data;
+
+	context->timeout_id_cm = 0;
+
+	return FALSE;
+}
+
+static void prv_cm_subscription_lost_cb(GUPnPServiceProxy *proxy,
+					const GError *reason,
+					gpointer user_data)
+{
+	rsu_device_context_t *context = user_data;
+	rsu_service_proxies_t *service_proxies = &context->service_proxies;
+
+	if (!context->timeout_id_cm) {
+		gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy,
+									TRUE);
+		context->timeout_id_cm = g_timeout_add_seconds(10,
+						prv_re_enable_cm_subscription,
+						context);
+	} else {
+		g_source_remove(context->timeout_id_cm);
+		(void) gupnp_service_proxy_remove_notify(
+				service_proxies->cm_proxy, "SinkProtocolInfo",
+				prv_sink_change_cb, context->device);
+
+		context->timeout_id_cm = 0;
+		context->subscribed_cm = FALSE;
+	}
+}
+
+static gboolean prv_re_enable_av_subscription(gpointer user_data)
+{
+	rsu_device_context_t *context = user_data;
+
+	context->timeout_id_av = 0;
+
+	return FALSE;
+}
+
+static void prv_av_subscription_lost_cb(GUPnPServiceProxy *proxy,
+					const GError *reason,
+					gpointer user_data)
+{
+	rsu_device_context_t *context = user_data;
+	rsu_service_proxies_t *service_proxies = &context->service_proxies;
+
+	if (!context->timeout_id_av) {
+		gupnp_service_proxy_set_subscribed(service_proxies->av_proxy,
+									TRUE);
+		context->timeout_id_av = g_timeout_add_seconds(10,
+						prv_re_enable_av_subscription,
+						context);
+	} else {
+		g_source_remove(context->timeout_id_av);
+		(void) gupnp_service_proxy_remove_notify(
+				service_proxies->av_proxy, "LastChange",
+				prv_last_change_cb, context->device);
+
+		context->timeout_id_av = 0;
+		context->subscribed_av = FALSE;
+	}
+}
+
+void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
+{
+	rsu_device_context_t *context;
+	rsu_service_proxies_t *service_proxies;
+
+	context = rsu_device_get_context(device);
+	service_proxies = &context->service_proxies;
+
+	gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy, TRUE);
+	(void) gupnp_service_proxy_add_notify(service_proxies->cm_proxy,
+					      "SinkProtocolInfo", G_TYPE_STRING,
+					      prv_sink_change_cb,
+					      device);
+	context->subscribed_cm = TRUE;
+
+	g_signal_connect(service_proxies->cm_proxy,
+				"subscription-lost",
+				G_CALLBACK(prv_cm_subscription_lost_cb),
+				context);
+
+	gupnp_service_proxy_set_subscribed(service_proxies->av_proxy, TRUE);
+	(void) gupnp_service_proxy_add_notify(service_proxies->av_proxy,
+					      "LastChange", G_TYPE_STRING,
+					      prv_last_change_cb,
+					      device);
+	context->subscribed_av = TRUE;
+
+	g_signal_connect(service_proxies->av_proxy,
+				"subscription-lost",
+				G_CALLBACK(prv_av_subscription_lost_cb),
+				context);
 }
 
 gboolean rsu_device_new(GDBusConnection *connection,
@@ -230,6 +331,8 @@ gboolean rsu_device_new(GDBusConnection *connection,
 	dev->contexts = g_ptr_array_new_with_free_func(prv_rsu_context_delete);
 
 	rsu_device_append_new_context(dev, ip_address, proxy);
+
+	rsu_device_subscribe_to_service_changes(dev);
 
 	new_path = g_string_new("");
 	g_string_printf(new_path, "%s/%u", RSU_SERVER_PATH, counter);

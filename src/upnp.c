@@ -29,6 +29,7 @@
 #include "device.h"
 #include "error.h"
 #include "host-service.h"
+#include "log.h"
 #include "prop-defs.h"
 #include "upnp.h"
 
@@ -94,6 +95,16 @@ on_error:
 	return;
 }
 
+static gboolean prv_subscribe_to_service_changes(gpointer user_data)
+{
+	rsu_device_t *device = user_data;
+
+	device->timeout_id = 0;
+	rsu_device_subscribe_to_service_changes(device);
+
+	return FALSE;
+}
+
 static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 				      GUPnPDeviceProxy *proxy,
 				      gpointer user_data)
@@ -104,6 +115,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	const gchar *ip_address;
 	unsigned int i;
 	rsu_device_context_t *context;
+	gboolean subscribed;
 
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
 	if (!udn)
@@ -124,15 +136,25 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	}
 
 	if (i < device->contexts->len) {
+		subscribed = (context->subscribed_av || context->subscribed_cm);
+
 		(void) g_ptr_array_remove_index(device->contexts, i);
 
 		if (device->contexts->len == 0) {
+			RSU_LOG_DEBUG("Last Context lost. Delete device");
+
 			if (device->current_task)
 				rsu_async_task_lost_object(
 					device->current_task);
 
 			upnp->lost_server(device->path, upnp->user_data);
 			g_hash_table_remove(upnp->server_udn_map, udn);
+		} else if (subscribed && !device->timeout_id) {
+			RSU_LOG_DEBUG("Subscribe on new context");
+
+			device->timeout_id = g_timeout_add_seconds(1,
+					prv_subscribe_to_service_changes,
+					device);
 		}
 	}
 

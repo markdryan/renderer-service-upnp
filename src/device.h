@@ -44,6 +44,10 @@ struct rsu_device_context_t_ {
 	GUPnPDeviceProxy *device_proxy;
 	rsu_service_proxies_t service_proxies;
 	rsu_device_t *device;
+	gboolean subscribed_av;
+	gboolean subscribed_cm;
+	guint timeout_id_av;
+	guint timeout_id_cm;
 };
 
 typedef struct rsu_props_t_ rsu_props_t;
@@ -60,6 +64,7 @@ struct rsu_device_t_ {
 	GPtrArray *contexts;
 	gpointer current_task;
 	rsu_props_t props;
+	guint timeout_id;
 };
 
 gboolean rsu_device_new(GDBusConnection *connection,
@@ -77,6 +82,7 @@ void rsu_device_append_new_context(rsu_device_t *device,
 				   GUPnPDeviceProxy *proxy);
 rsu_device_t *rsu_device_from_path(const gchar *path, GHashTable *device_list);
 rsu_device_context_t *rsu_device_get_context(rsu_device_t *device);
+void rsu_device_subscribe_to_service_changes(rsu_device_t *device);
 
 void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 			GCancellable *cancellable,

@@ -93,6 +93,7 @@ struct rsu_context_t_ {
 	GPtrArray *tasks;
 	GHashTable *watchers;
 	GCancellable *cancellable;
+	rsu_task_t *current_task;
 	rsu_upnp_t *upnp;
 	rsu_settings_context_t *settings;
 };
@@ -326,6 +327,8 @@ static void prv_process_sync_task(rsu_context_t *context, rsu_task_t *task)
 {
 	GError *error;
 
+	context->current_task = task;
+
 	switch (task->type) {
 	case RSU_TASK_GET_VERSION:
 		rsu_task_complete_and_delete(task);
@@ -344,6 +347,8 @@ static void prv_process_sync_task(rsu_context_t *context, rsu_task_t *task)
 	default:
 		break;
 	}
+
+	context->current_task = NULL;
 }
 
 static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
@@ -353,6 +358,7 @@ static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 
 	g_object_unref(context->cancellable);
 	context->cancellable = NULL;
+	context->current_task = NULL;
 
 	if (error) {
 		rsu_task_fail_and_delete(task, error);
@@ -371,6 +377,7 @@ static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 static void prv_process_async_task(rsu_context_t *context, rsu_task_t *task)
 {
 	context->cancellable = g_cancellable_new();
+	context->current_task = task;
 
 	switch (task->type) {
 	case RSU_TASK_GET_PROP:
@@ -527,6 +534,39 @@ static void prv_quit(rsu_context_t *context)
 
 static void prv_remove_client(rsu_context_t *context, const gchar *name)
 {
+	const gchar *client_name;
+	rsu_task_t *task;
+	guint pos;
+
+	if (context->cancellable) {
+		client_name = g_dbus_method_invocation_get_sender(
+					context->current_task->invocation);
+		if (!strcmp(client_name, name)) {
+			RSU_LOG_DEBUG("Cancelling current task, type is %d",
+						context->current_task->type);
+
+			g_cancellable_cancel(context->cancellable);
+		}
+	}
+
+	pos = 0;
+	while (pos < context->tasks->len) {
+		task = (rsu_task_t *) g_ptr_array_index(context->tasks, pos);
+
+		client_name = g_dbus_method_invocation_get_sender(
+							task->invocation);
+
+		if (strcmp(client_name, name)) {
+			pos++;
+			continue;
+		}
+
+		RSU_LOG_DEBUG("Removing task type %d from array", task->type);
+
+		(void) g_ptr_array_remove_index(context->tasks, pos);
+		rsu_task_cancel_and_delete(task);
+	}
+
 	rsu_upnp_lost_client(context->upnp, name);
 	(void) g_hash_table_remove(context->watchers, name);
 

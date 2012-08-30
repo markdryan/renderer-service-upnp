@@ -126,5 +126,6 @@ rsu_task_t *rsu_task_remove_uri_new(GDBusMethodInvocation *invocation,
 void rsu_task_complete_and_delete(rsu_task_t *task);
 void rsu_task_fail_and_delete(rsu_task_t *task, GError *error);
 void rsu_task_delete(rsu_task_t *task);
+void rsu_task_cancel_and_delete(rsu_task_t *task);
 
 #endif

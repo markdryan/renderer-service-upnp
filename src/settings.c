@@ -94,11 +94,18 @@ static void prv_rsu_settings_check_local_keyfile(const gchar *sys_path,
 {
 	GFile *sys_file = NULL;
 	GFile *loc_file;
+	GFile *loc_dir;
 
 	loc_file = g_file_new_for_path(loc_path);
+	loc_dir = g_file_get_parent(loc_file);
 
 	if (g_file_query_exists(loc_file, NULL) || (sys_path == NULL))
 		goto exit;
+
+	if (!g_file_query_exists(loc_dir, NULL)) {
+		if (!g_file_make_directory(loc_dir, NULL, NULL))
+			goto exit;
+	}
 
 	sys_file = g_file_new_for_path(sys_path);
 
@@ -106,6 +113,9 @@ static void prv_rsu_settings_check_local_keyfile(const gchar *sys_path,
 			   NULL, NULL, NULL, NULL);
 
 exit:
+	if (loc_dir)
+		g_object_unref(loc_dir);
+
 	if (loc_file)
 		g_object_unref(loc_file);
 

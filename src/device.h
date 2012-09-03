@@ -46,8 +46,10 @@ struct rsu_device_context_t_ {
 	rsu_device_t *device;
 	gboolean subscribed_av;
 	gboolean subscribed_cm;
+	gboolean subscribed_rc;
 	guint timeout_id_av;
 	guint timeout_id_cm;
+	guint timeout_id_rc;
 };
 
 typedef struct rsu_props_t_ rsu_props_t;

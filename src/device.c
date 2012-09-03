@@ -29,6 +29,7 @@
 #include "async.h"
 #include "device.h"
 #include "error.h"
+#include "log.h"
 #include "prop-defs.h"
 
 typedef void (*rsu_device_local_cb_t)(rsu_async_cb_data_t *cb_data);
@@ -47,6 +48,11 @@ static void prv_sink_change_cb(GUPnPServiceProxy *proxy,
 			       const char *variable,
 			       GValue *value,
 			       gpointer user_data);
+
+static void prv_rc_last_change_cb(GUPnPServiceProxy *proxy,
+				  const char *variable,
+				  GValue *value,
+				  gpointer user_data);
 
 static void prv_unref_variant(gpointer variant)
 {
@@ -92,6 +98,8 @@ static void prv_rsu_context_delete(gpointer context)
 			(void) g_source_remove(ctx->timeout_id_cm);
 		if (ctx->timeout_id_av)
 			(void) g_source_remove(ctx->timeout_id_av);
+		if (ctx->timeout_id_rc)
+			(void) g_source_remove(ctx->timeout_id_rc);
 
 		if (ctx->subscribed_cm) {
 			(void) gupnp_service_proxy_remove_notify(
@@ -103,6 +111,11 @@ static void prv_rsu_context_delete(gpointer context)
 				service_proxies->av_proxy, "LastChange",
 				prv_last_change_cb, ctx->device);
 		}
+		if (ctx->subscribed_rc) {
+			(void) gupnp_service_proxy_remove_notify(
+				service_proxies->rc_proxy, "LastChange",
+				prv_rc_last_change_cb, ctx->device);
+		}
 
 		g_free(ctx->ip_address);
 		if (ctx->device_proxy)
@@ -112,8 +125,46 @@ static void prv_rsu_context_delete(gpointer context)
 	}
 }
 
-static void prv_merge_meta_data(rsu_device_t *device, const gchar *key,
-				GVariant *value)
+static void prv_change_props(GHashTable *props,
+			     const gchar *key,
+			     GVariant *value,
+			     GVariantBuilder *changed_props_vb)
+{
+	g_hash_table_insert(props, (gpointer) key, value);
+	if (changed_props_vb)
+		g_variant_builder_add(changed_props_vb, "{sv}", key, value);
+}
+
+static void prv_emit_signal_properties_changed(rsu_device_t *device,
+					       const char *interface,
+					       GVariant *changed_props)
+{
+	GVariant *val = g_variant_ref_sink(g_variant_new("(s@a{sv}as)",
+					   interface,
+					   changed_props,
+					   NULL));
+
+	RSU_LOG_DEBUG("Emitted Signal: %s.%s - ObjectPath: %s",
+		      RSU_INTERFACE_PROPERTIES,
+		      RSU_INTERFACE_PROPERTIES_CHANGED,
+		      device->path);
+	RSU_LOG_DEBUG("Params: %s", g_variant_print(val, FALSE));
+
+	g_dbus_connection_emit_signal(device->connection,
+				      NULL,
+				      device->path,
+				      RSU_INTERFACE_PROPERTIES,
+				      RSU_INTERFACE_PROPERTIES_CHANGED,
+				      val,
+				      NULL);
+
+	g_variant_unref(val);
+}
+
+static void prv_merge_meta_data(rsu_device_t *device,
+				const gchar *key,
+				GVariant *value,
+				GVariantBuilder *changed_props_vb)
 {
 	GVariant *current_meta_data;
 	GVariantIter viter;
@@ -145,8 +196,10 @@ static void prv_merge_meta_data(rsu_device_t *device, const gchar *key,
 		g_variant_builder_add(vb, "{sv}", key, value);
 
 	val = g_variant_ref_sink(g_variant_builder_end(vb));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_METADATA, val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_METADATA,
+			 val,
+			 changed_props_vb);
 	g_variant_builder_unref(vb);
 }
 
@@ -167,8 +220,13 @@ static void prv_context_new(const gchar *ip_address,
 	ctx->ip_address = g_strdup(ip_address);
 	ctx->device_proxy = proxy;
 	ctx->device = device;
-	ctx->subscribed_av = ctx->subscribed_cm = FALSE;
-	ctx->timeout_id_av = ctx->timeout_id_cm = 0;
+	ctx->subscribed_av = FALSE;
+	ctx->subscribed_cm = FALSE;
+	ctx->subscribed_rc = FALSE;
+	ctx->timeout_id_av = 0;
+	ctx->timeout_id_cm = 0;
+	ctx->timeout_id_rc = 0;
+
 	g_object_ref(proxy);
 
 	service_proxies->cm_proxy = (GUPnPServiceProxy *)
@@ -177,7 +235,6 @@ static void prv_context_new(const gchar *ip_address,
 	service_proxies->av_proxy = (GUPnPServiceProxy *)
 		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
 					      av_type);
-
 	service_proxies->rc_proxy = (GUPnPServiceProxy *)
 		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
 					      rc_type);
@@ -281,6 +338,39 @@ static void prv_av_subscription_lost_cb(GUPnPServiceProxy *proxy,
 	}
 }
 
+static gboolean prv_re_enable_rc_subscription(gpointer user_data)
+{
+	rsu_device_context_t *context = user_data;
+
+	context->timeout_id_rc = 0;
+
+	return FALSE;
+}
+
+static void prv_rc_subscription_lost_cb(GUPnPServiceProxy *proxy,
+					const GError *reason,
+					gpointer user_data)
+{
+	rsu_device_context_t *context = user_data;
+	rsu_service_proxies_t *service_proxies = &context->service_proxies;
+
+	if (!context->timeout_id_rc) {
+		gupnp_service_proxy_set_subscribed(service_proxies->rc_proxy,
+									TRUE);
+		context->timeout_id_rc = g_timeout_add_seconds(10,
+						prv_re_enable_rc_subscription,
+						context);
+	} else {
+		g_source_remove(context->timeout_id_rc);
+		(void) gupnp_service_proxy_remove_notify(
+				service_proxies->rc_proxy, "LastChange",
+				prv_rc_last_change_cb, context->device);
+
+		context->timeout_id_rc = 0;
+		context->subscribed_rc = FALSE;
+	}
+}
+
 void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 {
 	rsu_device_context_t *context;
@@ -311,6 +401,18 @@ void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 	g_signal_connect(service_proxies->av_proxy,
 				"subscription-lost",
 				G_CALLBACK(prv_av_subscription_lost_cb),
+				context);
+
+	gupnp_service_proxy_set_subscribed(service_proxies->rc_proxy, TRUE);
+	(void) gupnp_service_proxy_add_notify(service_proxies->rc_proxy,
+					      "LastChange", G_TYPE_STRING,
+					      prv_rc_last_change_cb,
+					      device);
+	context->subscribed_rc = TRUE;
+
+	g_signal_connect(service_proxies->av_proxy,
+				"subscription-lost",
+				G_CALLBACK(prv_rc_subscription_lost_cb),
 				context);
 }
 
@@ -533,7 +635,9 @@ on_error:
 	return retval;
 }
 
-static void prv_add_actions(rsu_device_t *device, const gchar *actions)
+static void prv_add_actions(rsu_device_t *device,
+			    const gchar *actions,
+			    GVariantBuilder *changed_props_vb)
 {
 	gchar **parts;
 	unsigned int i = 0;
@@ -568,58 +672,69 @@ static void prv_add_actions(rsu_device_t *device, const gchar *actions)
 	}
 
 	g_variant_ref(false_val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_CONTROL, false_val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_CONTROL, false_val,
+			 changed_props_vb);
 
 	val = play ? true_val : false_val;
 	g_variant_ref(val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_PLAY, val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_PLAY, val,
+			 changed_props_vb);
 
 	val = ppause ? true_val : false_val;
 	g_variant_ref(val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_PAUSE, val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_PAUSE, val,
+			 changed_props_vb);
 
 	val = seek ? true_val : false_val;
 	g_variant_ref(val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_SEEK, val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_SEEK, val,
+			 changed_props_vb);
 
 	val = next ? true_val : false_val;
 	g_variant_ref(val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_NEXT, val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_NEXT, val,
+			 changed_props_vb);
 
 	val = previous ? true_val : false_val;
 	g_variant_ref(val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_PREVIOUS, val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_PREVIOUS, val,
+			 changed_props_vb);
 
 	g_variant_unref(true_val);
 	g_variant_unref(false_val);
 	g_strfreev(parts);
 }
 
-static void prv_add_all_actions(rsu_device_t *device)
+static void prv_add_all_actions(rsu_device_t *device,
+				GVariantBuilder *changed_props_vb)
 {
 	GVariant *val;
 
 	val = g_variant_ref_sink(g_variant_new_boolean(TRUE));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_PLAY, val);
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_PAUSE, g_variant_ref(val));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_SEEK, g_variant_ref(val));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_NEXT, g_variant_ref(val));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_PREVIOUS,
-			    g_variant_ref(val));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_CAN_CONTROL,
-			    g_variant_ref(val));
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_PLAY, val,
+			 changed_props_vb);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_PAUSE, g_variant_ref(val),
+			 changed_props_vb);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_SEEK, g_variant_ref(val),
+			 changed_props_vb);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_NEXT, g_variant_ref(val),
+			 changed_props_vb);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_PREVIOUS, g_variant_ref(val),
+			 changed_props_vb);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_CAN_CONTROL, g_variant_ref(val),
+			 changed_props_vb);
 }
 
 static gint64 prv_duration_to_int64(const gchar *duration)
@@ -678,15 +793,17 @@ static gchar *prv_int64_to_duration(gint64 micro_seconds)
 	return g_string_free(retval, FALSE);
 }
 
-static void prv_add_reltime(rsu_device_t *device, const gchar *reltime)
+static void prv_add_reltime(rsu_device_t *device,
+			    const gchar *reltime,
+			    GVariantBuilder *changed_props_vb)
 {
 	GVariant *val;
 	gint64 pos = prv_duration_to_int64(reltime);
 
 	val = g_variant_ref_sink(g_variant_new_int64(pos));
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_POSITION,
-			    val);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_POSITION, val,
+			 changed_props_vb);
 }
 
 static void prv_found_item(GUPnPDIDLLiteParser *parser,
@@ -772,8 +889,11 @@ static void prv_found_item(GUPnPDIDLLiteParser *parser,
 	}
 }
 
-static void prv_add_track_meta_data(rsu_device_t *device, const gchar *metadata,
-				    const gchar *duration, const gchar *uri)
+static void prv_add_track_meta_data(rsu_device_t *device,
+				    const gchar *metadata,
+				    const gchar *duration,
+				    const gchar *uri,
+				    GVariantBuilder *changed_props_vb)
 {
 	gchar *didl = g_strdup_printf("<DIDL-Lite>%s</DIDL-Lite>", metadata);
 	GUPnPDIDLLiteParser *parser = NULL;
@@ -806,9 +926,10 @@ static void prv_add_track_meta_data(rsu_device_t *device, const gchar *metadata,
 			goto on_error;
 	}
 
-	g_hash_table_insert(device->props.player_props,
-			    RSU_INTERFACE_PROP_METADATA,
-			    g_variant_ref_sink(g_variant_builder_end(vb)));
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_METADATA,
+			 g_variant_ref_sink(g_variant_builder_end(vb)),
+			 changed_props_vb);
 
 on_error:
 
@@ -826,6 +947,8 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 {
 	GUPnPLastChangeParser *parser;
 	rsu_device_t *device = user_data;
+	GVariantBuilder *changed_props_vb;
+	GVariant *changed_props;
 	gchar *meta_data = NULL;
 	gchar *actions = NULL;
 	gchar *play_speed = NULL;
@@ -849,21 +972,33 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 		    NULL))
 		goto on_error;
 
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+
 	if (meta_data) {
-		prv_add_track_meta_data(device, meta_data, duration, uri);
+		prv_add_track_meta_data(device,
+					meta_data,
+					duration,
+					uri,
+					changed_props_vb);
 		g_free(meta_data);
 	} else {
 		if (duration) {
 			val = g_variant_new_int64(prv_duration_to_int64(
 							  duration));
 			val = g_variant_ref_sink(val);
-			prv_merge_meta_data(device, "mpris:length", val);
+			prv_merge_meta_data(device,
+					    "mpris:length",
+					    val,
+					    changed_props_vb);
 			g_variant_unref(val);
 		}
 
 		if (uri) {
 			val = g_variant_ref_sink(g_variant_new_string(uri));
-			prv_merge_meta_data(device, "xesam:url", val);
+			prv_merge_meta_data(device,
+					    "xesam:url",
+					    val,
+					    changed_props_vb);
 			g_variant_unref(val);
 		}
 	}
@@ -872,7 +1007,7 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 	g_free(uri);
 
 	if (actions) {
-		prv_add_actions(device, actions);
+		prv_add_actions(device, actions, changed_props_vb);
 		g_free(actions);
 	}
 
@@ -880,8 +1015,9 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 		val = g_variant_ref_sink(
 			g_variant_new_double(
 				prv_map_transport_speed(play_speed)));
-		g_hash_table_insert(device->props.player_props,
-				    RSU_INTERFACE_PROP_RATE, val);
+		prv_change_props(device->props.player_props,
+				 RSU_INTERFACE_PROP_RATE, val,
+				 changed_props_vb);
 		g_free(play_speed);
 	}
 
@@ -889,17 +1025,71 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 		val = g_variant_ref_sink(
 			g_variant_new_string(
 				prv_map_transport_state(state)));
-		g_hash_table_insert(device->props.player_props,
-				    RSU_INTERFACE_PROP_PLAYBACK_STATUS,
-				    val);
+		prv_change_props(device->props.player_props,
+				 RSU_INTERFACE_PROP_PLAYBACK_STATUS, val,
+				 changed_props_vb);
 		g_free(state);
 	}
+
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_METADATA,
+			 val,
+			 changed_props_vb);
+
+	changed_props = g_variant_ref_sink(
+				g_variant_builder_end(changed_props_vb));
+	prv_emit_signal_properties_changed(device,
+					   RSU_INTERFACE_PLAYER,
+					   changed_props);
+	g_variant_unref(changed_props);
+	g_variant_builder_unref(changed_props_vb);
 
 on_error:
 
 	g_object_unref(parser);
 }
 
+static void prv_rc_last_change_cb(GUPnPServiceProxy *proxy,
+			       const char *variable,
+			       GValue *value,
+			       gpointer user_data)
+{
+	GUPnPLastChangeParser *parser;
+	rsu_device_t *device = user_data;
+	GVariantBuilder *changed_props_vb;
+	GVariant *changed_props;
+	GVariant *val;
+	guint volume;
+
+	parser = gupnp_last_change_parser_new();
+
+	if (!gupnp_last_change_parser_parse_last_change(
+		    parser, 0,
+		    g_value_get_string(value),
+		    NULL,
+		    "Volume", G_TYPE_UINT, &volume,
+		    NULL))
+		goto on_error;
+
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+
+	val = g_variant_ref_sink(g_variant_new_uint32(volume));
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_VOLUME, val,
+			 changed_props_vb);
+
+	changed_props = g_variant_ref_sink(
+				g_variant_builder_end(changed_props_vb));
+	prv_emit_signal_properties_changed(device,
+					   RSU_INTERFACE_PLAYER,
+					   changed_props);
+	g_variant_unref(changed_props);
+	g_variant_builder_unref(changed_props_vb);
+
+on_error:
+
+	g_object_unref(parser);
+}
 
 static void prv_as_prop_from_hash_table(const gchar *prop_name,
 					GHashTable *values, GHashTable *props)
@@ -997,6 +1187,8 @@ static void prv_get_position_info_cb(GUPnPServiceProxy *proxy,
 	rsu_async_cb_data_t *cb_data = user_data;
 	GError *upnp_error = NULL;
 	rsu_device_data_t *device_data = cb_data->private;
+	GVariantBuilder *changed_props_vb;
+	GVariant *changed_props;
 
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
@@ -1011,9 +1203,19 @@ static void prv_get_position_info_cb(GUPnPServiceProxy *proxy,
 		goto on_error;
 	}
 
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+
 	g_strstrip(rel_pos);
-	prv_add_reltime(cb_data->device, rel_pos);
+	prv_add_reltime(cb_data->device, rel_pos, changed_props_vb);
 	g_free(rel_pos);
+
+	changed_props = g_variant_ref_sink(
+				g_variant_builder_end(changed_props_vb));
+	prv_emit_signal_properties_changed(cb_data->device,
+					   RSU_INTERFACE_PLAYER,
+					   changed_props);
+	g_variant_unref(changed_props);
+	g_variant_builder_unref(changed_props_vb);
 
 on_error:
 
@@ -1049,6 +1251,8 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	rsu_device_context_t *context;
 	rsu_props_t *props = &device->props;
 	gchar *friendly_name;
+	GVariantBuilder *changed_props_vb;
+	GVariant *changed_props;
 
 	context = rsu_device_get_context(device);
 
@@ -1067,20 +1271,10 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 			    RSU_INTERFACE_PROP_HAS_TRACK_LIST,
 			    g_variant_ref(val));
 
-	/* TODO:  The following three properties require information to
+	/* TODO:  The following properties require information to
 	   be read out of the service file to be properly implemented.
 	   The problem is that GUPnP does not currently allow you to
 	   cancel requests to access the service file */
-
-	val = g_variant_ref_sink(g_variant_new_double(1.0));
-	g_hash_table_insert(props->player_props,
-			    RSU_INTERFACE_PROP_MINIMUM_RATE, val);
-	g_hash_table_insert(props->player_props,
-			    RSU_INTERFACE_PROP_MAXIMUM_RATE,
-			    g_variant_ref(val));
-	g_hash_table_insert(props->player_props,
-			    RSU_INTERFACE_PROP_VOLUME,
-			    g_variant_ref(val));
 
 	info = (GUPnPDeviceInfo *) context->device_proxy;
 	friendly_name = gupnp_device_info_get_friendly_name(info);
@@ -1088,8 +1282,27 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	g_free(friendly_name);
 	g_hash_table_insert(props->root_props, RSU_INTERFACE_PROP_IDENTITY,
 			    val);
-	prv_add_all_actions(device);
+
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+
+	val = g_variant_ref_sink(g_variant_new_double(1.0));
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_MINIMUM_RATE, val,
+			 changed_props_vb);
+	prv_change_props(device->props.player_props,
+			 RSU_INTERFACE_PROP_MAXIMUM_RATE, g_variant_ref(val),
+			 changed_props_vb);
+
+	prv_add_all_actions(device, changed_props_vb);
 	device->props.synced = TRUE;
+
+	changed_props = g_variant_ref_sink(
+				g_variant_builder_end(changed_props_vb));
+	prv_emit_signal_properties_changed(device,
+					   RSU_INTERFACE_PLAYER,
+					   changed_props);
+	g_variant_unref(changed_props);
+	g_variant_builder_unref(changed_props_vb);
 }
 
 static void prv_complete_get_prop(rsu_async_cb_data_t *cb_data)

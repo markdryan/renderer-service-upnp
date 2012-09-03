@@ -203,6 +203,9 @@ interface.  The main points of interest are noted below:
 - The first parameter to SetPosition is ignored, and any valid d-Bus
   path can be specified as its value.
 
+- PropertiesChanged signals are emitted via the org.freedesktop.DBus.Properties
+ interface of a server object instance when org.mpris.MediaPlayer2.Player
+ interface properties value change.
 
 org.mpris.MediaPlayer2.TrackList and org.mpris.MediaPlayer2.Playlists
 ---------------------------------------------------------------------

@@ -27,6 +27,8 @@
 #define RSU_INTERFACE_SERVER "org.mpris.MediaPlayer2"
 #define RSU_INTERFACE_PLAYER "org.mpris.MediaPlayer2.Player"
 
+#define RSU_INTERFACE_PROPERTIES_CHANGED "PropertiesChanged"
+
 #define RSU_INTERFACE_PROP_CAN_QUIT "CanQuit"
 #define RSU_INTERFACE_PROP_CAN_RAISE "CanRaise"
 #define RSU_INTERFACE_PROP_CAN_SET_FULLSCREEN "CanSetFullscreen"

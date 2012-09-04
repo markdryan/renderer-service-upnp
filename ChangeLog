@@ -1,3 +1,12 @@
+version 0.0.3
+	- Generate an org.freedesktop.DBus.Properties.PropertiesChanged signal each 
+	  time one of the properties listed in the issue below changes.
+		https://github.com/01org/renderer-service-upnp/issues/22
+	- Fixed bug: Create local configuration directory if it doesn't exist.
+		https://github.com/01org/renderer-service-upnp/issues/21
+	- Fixed bug: RSU receives multiple UPnP notifications
+		https://github.com/01org/renderer-service-upnp/issues/25
+
 version 0.0.2
 	- Control exit behaviour of RSU
 		https://github.com/01org/renderer-service-upnp/issues/18

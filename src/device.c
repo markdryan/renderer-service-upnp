@@ -1031,11 +1031,6 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 		g_free(state);
 	}
 
-	prv_change_props(device->props.player_props,
-			 RSU_INTERFACE_PROP_METADATA,
-			 val,
-			 changed_props_vb);
-
 	changed_props = g_variant_ref_sink(
 				g_variant_builder_end(changed_props_vb));
 	prv_emit_signal_properties_changed(device,

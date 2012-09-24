@@ -1,5 +1,11 @@
+version 0.0.4
+	- Fixed bug #20: RSU executes commands of dead children
+		https://github.com/01org/renderer-service-upnp/issues/20
+	- Fixed bug #31: Useless METADATA prop update
+		https://github.com/01org/renderer-service-upnp/issues/31
+
 version 0.0.3
-	- Generate an org.freedesktop.DBus.Properties.PropertiesChanged signal each 
+	- Generate an org.freedesktop.DBus.Properties.PropertiesChanged signal each
 	  time one of the properties listed in the issue below changes.
 		https://github.com/01org/renderer-service-upnp/issues/22
 	- Fixed bug: Create local configuration directory if it doesn't exist.

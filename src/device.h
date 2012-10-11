@@ -67,6 +67,7 @@ struct rsu_device_t_ {
 	gpointer current_task;
 	rsu_props_t props;
 	guint timeout_id;
+	guint max_volume;
 };
 
 gboolean rsu_device_new(GDBusConnection *connection,

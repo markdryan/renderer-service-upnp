@@ -1239,6 +1239,160 @@ static void prv_get_position_info(GCancellable *cancellable,
 						 NULL);
 }
 
+/***********************************************************************/
+/*  Rational numbers parameters of the following functions are formed  */
+/* like this : «2» «5/6». A decimal notation like «2.6» is not allowed */
+/***********************************************************************/
+static inline long prv_rational_get_numerator(const char *r)
+{
+	return strtol(r, NULL, 10);
+}
+
+static long prv_rational_get_denominator(const char *r)
+{
+	char *div_pos = strstr(r, "/");
+	if (div_pos == NULL)
+		goto exit;
+
+	return strtol(div_pos + 1, NULL, 10);
+
+exit:
+	return 1;
+}
+
+static double prv_rational_to_double(const char *r)
+{
+	long p;
+	long q;
+
+	p = prv_rational_get_numerator(r);
+	if (p == 0)
+		goto error;
+
+	q = prv_rational_get_denominator(r);
+	if (q == 0)
+		goto error;
+
+	return (double)p/(double)q;
+
+error:
+	return 0.0;
+}
+
+static gint prv_compare_rationals(gconstpointer a, gconstpointer b)
+{
+	long a_numerator = prv_rational_get_numerator((char *) a);
+	long b_numerator = prv_rational_get_numerator((char *) b);
+	long a_denominator = prv_rational_get_denominator((char *) a);
+	long b_denominator = prv_rational_get_denominator((char *) b);
+
+	return (a_numerator * b_denominator) - (b_numerator * a_denominator);
+}
+
+static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
+				 GVariant **tp_speeds,
+				 double *min_rate, double *max_rate)
+{
+	char *rate;
+	char *min_rate_str;
+	char *max_rate_str;
+	GList *list;
+	GVariantBuilder vb;
+
+	if ((svi == NULL) || (svi->allowed_values == NULL))
+		goto exit;
+
+	g_variant_builder_init(&vb, G_VARIANT_TYPE("as"));
+
+	list = svi->allowed_values;
+
+	min_rate_str = list->data;
+	max_rate_str = min_rate_str;
+
+	for (; list != NULL; list = list->next) {
+		rate = (char *)list->data;
+
+		if (prv_compare_rationals(rate, "0") == 0)
+			continue;
+
+		g_variant_builder_add(&vb, "s", rate);
+
+		if (prv_compare_rationals(min_rate_str, rate) > 0)
+			min_rate_str = rate;
+		else if (prv_compare_rationals(max_rate_str, rate) < 0)
+			max_rate_str = rate;
+	}
+
+	*tp_speeds = g_variant_builder_end(&vb);
+
+	*min_rate = prv_rational_to_double(min_rate_str);
+	*max_rate = prv_rational_to_double(max_rate_str);
+
+exit:
+	return;
+}
+
+static void prv_get_services_states_maxima(GUPnPDeviceInfo *info,
+					   GVariant **tp_speeds,
+					   guint *max_volume,
+					   double *min_rate, double *max_rate)
+{
+	const GUPnPServiceStateVariableInfo *svi;
+	GList *services;
+	GList *service;
+	GError *error;
+	GUPnPServiceInfo *sinfo;
+	GUPnPServiceIntrospection *introspection;
+	const char *service_type;
+
+	services = gupnp_device_info_list_services(info);
+	if (services == NULL)
+		goto exit;
+
+	for (service = services; service != NULL; service = service->next) {
+		sinfo = GUPNP_SERVICE_INFO(service->data);
+		service_type = gupnp_service_info_get_service_type(sinfo);
+
+		if (!g_strrstr(service_type, ":service:AVTransport:") &&
+		    !g_strrstr(service_type, ":service:RenderingControl:")) {
+			g_object_unref(service->data);
+			continue;
+		}
+
+		error = NULL;
+		introspection =	gupnp_service_info_get_introspection(sinfo,
+								     &error);
+		if (error != NULL) {
+			RSU_LOG_DEBUG("failed to fetch introspection file "
+				      "for %s", service_type);
+			g_error_free(error);
+			g_object_unref(service->data);
+			continue;
+		}
+
+		if (g_strrstr(service_type, ":service:AVTransport:")) {
+			svi = gupnp_service_introspection_get_state_variable(
+				introspection, "TransportPlaySpeed");
+
+			prv_get_rates_values(svi, tp_speeds,
+					     min_rate, max_rate);
+		} else {
+			svi = gupnp_service_introspection_get_state_variable(
+				introspection, "Volume");
+			if (svi != NULL)
+				*max_volume = g_value_get_uint(&svi->maximum);
+		}
+
+		g_object_unref(service->data);
+		g_object_unref(introspection);
+	}
+
+	g_list_free(services);
+
+exit:
+	return;
+}
+
 static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 {
 	GVariant *val;
@@ -1248,6 +1402,10 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	gchar *friendly_name;
 	GVariantBuilder *changed_props_vb;
 	GVariant *changed_props;
+	double min_rate = 0;
+	double max_rate = 0;
+	guint max_volume = 0;
+	GVariant *transport_play_speeds = NULL;
 
 	context = rsu_device_get_context(device);
 
@@ -1266,11 +1424,6 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 			    RSU_INTERFACE_PROP_HAS_TRACK_LIST,
 			    g_variant_ref(val));
 
-	/* TODO:  The following properties require information to
-	   be read out of the service file to be properly implemented.
-	   The problem is that GUPnP does not currently allow you to
-	   cancel requests to access the service file */
-
 	info = (GUPnPDeviceInfo *) context->device_proxy;
 	friendly_name = gupnp_device_info_get_friendly_name(info);
 	val = g_variant_ref_sink(g_variant_new_string(friendly_name));
@@ -1280,13 +1433,31 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 
 	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
-	val = g_variant_ref_sink(g_variant_new_double(1.0));
-	prv_change_props(device->props.player_props,
-			 RSU_INTERFACE_PROP_MINIMUM_RATE, val,
-			 changed_props_vb);
-	prv_change_props(device->props.player_props,
-			 RSU_INTERFACE_PROP_MAXIMUM_RATE, g_variant_ref(val),
-			 changed_props_vb);
+	prv_get_services_states_maxima(info, &transport_play_speeds,
+				       &max_volume, &min_rate, &max_rate);
+
+	if (min_rate != 0) {
+		val = g_variant_ref_sink(g_variant_new_double(min_rate));
+		prv_change_props(device->props.player_props,
+				 RSU_INTERFACE_PROP_MINIMUM_RATE, val,
+				 changed_props_vb);
+	}
+
+	if (max_rate != 0) {
+		val = g_variant_ref_sink(g_variant_new_double(max_rate));
+		prv_change_props(device->props.player_props,
+				 RSU_INTERFACE_PROP_MAXIMUM_RATE,
+				 val, changed_props_vb);
+	}
+
+	if (transport_play_speeds != NULL) {
+		val = g_variant_ref_sink(transport_play_speeds);
+		prv_change_props(device->props.player_props,
+				 RSU_INTERFACE_PROP_TRANSPORT_PLAY_SPEEDS,
+				 val, changed_props_vb);
+	}
+
+	device->max_volume = max_volume;
 
 	prv_add_all_actions(device, changed_props_vb);
 	device->props.synced = TRUE;

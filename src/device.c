@@ -972,7 +972,7 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 		    NULL))
 		goto on_error;
 
-	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
 	if (meta_data) {
 		prv_add_track_meta_data(device,
@@ -1066,7 +1066,7 @@ static void prv_rc_last_change_cb(GUPnPServiceProxy *proxy,
 		    NULL))
 		goto on_error;
 
-	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
 	val = g_variant_ref_sink(g_variant_new_uint32(volume));
 	prv_change_props(device->props.player_props,
@@ -1198,7 +1198,7 @@ static void prv_get_position_info_cb(GUPnPServiceProxy *proxy,
 		goto on_error;
 	}
 
-	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
 	g_strstrip(rel_pos);
 	prv_add_reltime(cb_data->device, rel_pos, changed_props_vb);
@@ -1278,7 +1278,7 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	g_hash_table_insert(props->root_props, RSU_INTERFACE_PROP_IDENTITY,
 			    val);
 
-	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
+	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
 	val = g_variant_ref_sink(g_variant_new_double(1.0));
 	prv_change_props(device->props.player_props,

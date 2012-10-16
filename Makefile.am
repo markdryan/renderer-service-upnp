@@ -2,6 +2,7 @@ INCLUDES = -DG_LOG_DOMAIN=\"RSU\"
 
 AM_CFLAGS =	$(GLIB_CFLAGS)				\
 		$(GIO_CFLAGS)				\
+		$(GSSDP_CFLAGS)				\
 		$(GUPNP_CFLAGS)				\
 		$(GUPNPAV_CFLAGS)			\
 		$(SOUP_CFLAGS)				\
@@ -40,6 +41,7 @@ renderer_service_upnp_SOURCES = $(renderer_service_upnp_sources) \
 
 renderer_service_upnp_LDADD = $(GLIB_LIBS)	\
 			      $(GIO_LIBS)	\
+			      $(GSSDP_LIBS)	\
 			      $(GUPNP_LIBS)	\
 			      $(GUPNPAV_LIBS)	\
 			      $(SOUP_LIBS)

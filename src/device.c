@@ -54,6 +54,8 @@ static void prv_rc_last_change_cb(GUPnPServiceProxy *proxy,
 				  GValue *value,
 				  gpointer user_data);
 
+static void prv_props_update(rsu_device_t *device, rsu_task_t *task);
+
 static void prv_unref_variant(gpointer variant)
 {
 	GVariant *var = variant;
@@ -1054,7 +1056,8 @@ static void prv_rc_last_change_cb(GUPnPServiceProxy *proxy,
 	GVariantBuilder *changed_props_vb;
 	GVariant *changed_props;
 	GVariant *val;
-	guint volume;
+	guint device_volume;
+	double mpris_volume;
 
 	parser = gupnp_last_change_parser_new();
 
@@ -1062,13 +1065,20 @@ static void prv_rc_last_change_cb(GUPnPServiceProxy *proxy,
 		    parser, 0,
 		    g_value_get_string(value),
 		    NULL,
-		    "Volume", G_TYPE_UINT, &volume,
+		    "Volume", G_TYPE_UINT, &device_volume,
 		    NULL))
+		goto on_error;
+
+	if (device->props.synced == FALSE)
+		prv_props_update(device, NULL);
+
+	if (device->max_volume == 0)
 		goto on_error;
 
 	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
-	val = g_variant_ref_sink(g_variant_new_uint32(volume));
+	mpris_volume = (double)device_volume / (double)device->max_volume;
+	val = g_variant_ref_sink(g_variant_new_double(mpris_volume));
 	prv_change_props(device->props.player_props,
 			 RSU_INTERFACE_PROP_VOLUME, val,
 			 changed_props_vb);

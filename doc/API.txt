@@ -192,11 +192,12 @@ interface.  The main points of interest are noted below:
 
 - The Rate property is currently read only.  This will change in the future.
 
-- The MinimumRate and MaximumRate properties are currently hard coded
-  to 1.0.  This will change in the future.
+- The Volume property is read only.  This will change in the future.
 
-- The Volume property is currently hoarded to 1.0 and is read only.
-  This will change in the future.
+- The TransportPlaySpeeds property is not part of MPRIS specification: it
+  is an array of string, representing the possible play speed values.
+  This allows the clients that behave like UPnP controlers to set the rate with
+  a suitable value.
 
 - The Seek signal is not implemented yet.
 
@@ -204,8 +205,8 @@ interface.  The main points of interest are noted below:
   path can be specified as its value.
 
 - PropertiesChanged signals are emitted via the org.freedesktop.DBus.Properties
- interface of a server object instance when org.mpris.MediaPlayer2.Player
- interface properties value change.
+  interface of a server object instance when org.mpris.MediaPlayer2.Player
+  interface properties value change.
 
 org.mpris.MediaPlayer2.TrackList and org.mpris.MediaPlayer2.Playlists
 ---------------------------------------------------------------------

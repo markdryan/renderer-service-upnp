@@ -195,9 +195,9 @@ interface.  The main points of interest are noted below:
 - The Volume property is read only.  This will change in the future.
 
 - The TransportPlaySpeeds property is not part of MPRIS specification: it
-  is an array of string, representing the possible play speed values.
-  This allows the clients that behave like UPnP controlers to set the rate with
-  a suitable value.
+  is an array of strings, representing the range of play speeds supported by
+  the renderer.  Clients can use this information to determine acceptable
+  values to assign to the Rate property.
 
 - The Seek signal is not implemented yet.
 

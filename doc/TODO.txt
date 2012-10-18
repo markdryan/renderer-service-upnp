@@ -1,12 +1,6 @@
 TODO:
 -----
 
-* Logging mechanism (Mark Ryan) 26/04/2012
-
-  renderer-service-upnp is badly in need of a logging mechanism that
-  can be switched on and off.
-
-
 * Remove request bottleneck (Mark Ryan) 26/04/2012
 
  All requests from all clients are placed in a queue upon reception
@@ -34,15 +28,6 @@ TODO:
 
 
 * Implement org.mpris.MediaPlayer2.TrackList (Mark Ryan) 26/04/2012
-
-
-* Generate signals when a property changes (Mark Ryan) 26/04/2012
-
- Currently no signal is generated when a renderer property changes.  This
- is unfortunate as it prevents Digital Media Controllers from correctly
- updating their user interfaces.  The code needs to be modified to issue
- the org.freedesktop.DBus.Properties.PropertiesChanged signal when properties
- change.
 
 
 * Implement the Volume property (Mark Ryan) 26/04/2012

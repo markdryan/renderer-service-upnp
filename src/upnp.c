@@ -244,6 +244,30 @@ GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp)
 	return g_variant_ref_sink(g_variant_builder_end(&vb));
 }
 
+void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
+		       GCancellable *cancellable,
+		       rsu_upnp_task_complete_t cb,
+		       void *user_data)
+{
+	rsu_device_t *device;
+	rsu_async_cb_data_t *cb_data;
+
+	device = rsu_device_from_path(task->path, upnp->server_udn_map);
+
+	if (!device) {
+		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
+						NULL);
+		cb_data->error = g_error_new(RSU_ERROR,
+					     RSU_ERROR_OBJECT_NOT_FOUND,
+					     "Cannot locate a device"
+					     " for the specified "
+					     "object");
+		(void) g_idle_add(rsu_async_complete_task, cb_data);
+	} else {
+		rsu_device_set_prop(device, task, cancellable, cb, user_data);
+	}
+}
+
 void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb,

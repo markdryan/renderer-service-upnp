@@ -1571,6 +1571,84 @@ static void prv_complete_get_props(rsu_async_cb_data_t *cb_data)
 	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
 }
 
+static void prv_simple_call_cb(GUPnPServiceProxy *proxy,
+			       GUPnPServiceProxyAction *action,
+			       gpointer user_data)
+{
+	rsu_async_cb_data_t *cb_data = user_data;
+	GError *upnp_error = NULL;
+
+	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					    &upnp_error, NULL)) {
+		cb_data->error = g_error_new(RSU_ERROR,
+					     RSU_ERROR_OPERATION_FAILED,
+					     "Operation "
+					     "failed: %s", upnp_error->message);
+		g_error_free(upnp_error);
+	}
+
+	(void) g_idle_add(rsu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+}
+
+static void prv_rsu_set_volume(rsu_async_cb_data_t *cb_data, GVariant *params)
+{
+	double volume;
+
+	volume = g_variant_get_double(params) * cb_data->device->max_volume;
+
+	cb_data->action =
+		gupnp_service_proxy_begin_action(cb_data->proxy, "SetVolume",
+						 prv_simple_call_cb, cb_data,
+						 "InstanceID", G_TYPE_INT, 0,
+						 "Channel",
+						 G_TYPE_STRING, "Master",
+						 "DesiredVolume",
+						 G_TYPE_UINT, (guint) volume,
+						 NULL);
+}
+
+void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
+			 GCancellable *cancellable,
+			 rsu_upnp_task_complete_t cb,
+			 void *user_data)
+{
+	rsu_async_cb_data_t *cb_data;
+	rsu_device_context_t *context;
+	rsu_task_set_prop_t *set_prop = &task->ut.set_prop;
+
+	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
+					device);
+
+	if (g_strcmp0(set_prop->interface_name, RSU_INTERFACE_PLAYER) != 0 &&
+	    g_strcmp0(set_prop->interface_name, "") != 0)
+		goto property_not_managed;
+
+	if (g_strcmp0(set_prop->prop_name, RSU_INTERFACE_PROP_VOLUME) != 0)
+		goto property_not_managed;
+
+	context = rsu_device_get_context(device);
+
+	cb_data->cancel_id =
+		g_cancellable_connect(cancellable,
+				      G_CALLBACK(rsu_async_task_cancelled),
+				      cb_data, NULL);
+	cb_data->cancellable = cancellable;
+	cb_data->proxy = context->service_proxies.rc_proxy;
+
+	prv_rsu_set_volume(cb_data, set_prop->params);
+	return;
+
+property_not_managed:
+
+	cb_data->error = g_error_new(RSU_ERROR, RSU_ERROR_UNKNOWN_PROPERTY,
+				     "Property %s/%s not managed for setting",
+				     set_prop->interface_name,
+				     set_prop->prop_name);
+
+	g_idle_add(rsu_async_complete_task, cb_data);
+}
+
 void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb,
@@ -1646,26 +1724,6 @@ void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
 	}
 }
 
-static void prv_simple_call_cb(GUPnPServiceProxy *proxy,
-			       GUPnPServiceProxyAction *action,
-			       gpointer user_data)
-{
-	rsu_async_cb_data_t *cb_data = user_data;
-	GError *upnp_error = NULL;
-
-	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
-					    &upnp_error, NULL)) {
-		cb_data->error = g_error_new(RSU_ERROR,
-					     RSU_ERROR_OPERATION_FAILED,
-					     "Operation "
-					     "failed: %s", upnp_error->message);
-		g_error_free(upnp_error);
-	}
-
-	(void) g_idle_add(rsu_async_complete_task, cb_data);
-	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
-}
-
 void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 		     GCancellable *cancellable,
 		     rsu_upnp_task_complete_t cb,
@@ -1737,6 +1795,7 @@ static void prv_simple_command(rsu_device_t *device, rsu_task_t *task,
 						 "InstanceID", G_TYPE_INT, 0,
 						 NULL);
 }
+
 void rsu_device_pause(rsu_device_t *device, rsu_task_t *task,
 		      GCancellable *cancellable,
 		      rsu_upnp_task_complete_t cb,

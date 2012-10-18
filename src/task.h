@@ -31,6 +31,7 @@ enum rsu_task_type_t_ {
 	RSU_TASK_GET_SERVERS,
 	RSU_TASK_RAISE,
 	RSU_TASK_QUIT,
+	RSU_TASK_SET_PROP,
 	RSU_TASK_GET_ALL_PROPS,
 	RSU_TASK_GET_PROP,
 	RSU_TASK_PAUSE,
@@ -60,6 +61,13 @@ struct rsu_task_get_prop_t_ {
 	gchar *interface_name;
 };
 
+typedef struct rsu_task_set_prop_t_ rsu_task_set_prop_t;
+struct rsu_task_set_prop_t_ {
+	gchar *prop_name;
+	gchar *interface_name;
+	GVariant *params;
+};
+
 typedef struct rsu_task_open_uri_t_ rsu_task_open_uri_t;
 struct rsu_task_open_uri_t_ {
 	gchar *uri;
@@ -87,6 +95,7 @@ struct rsu_task_t_ {
 	union {
 		rsu_task_get_props_t get_props;
 		rsu_task_get_prop_t get_prop;
+		rsu_task_set_prop_t set_prop;
 		rsu_task_open_uri_t open_uri;
 		rsu_task_host_uri_t host_uri;
 		rsu_task_seek_t seek;
@@ -97,6 +106,8 @@ rsu_task_t *rsu_task_get_version_new(GDBusMethodInvocation *invocation);
 rsu_task_t *rsu_task_get_servers_new(GDBusMethodInvocation *invocation);
 rsu_task_t *rsu_task_raise_new(GDBusMethodInvocation *invocation);
 rsu_task_t *rsu_task_quit_new(GDBusMethodInvocation *invocation);
+rsu_task_t *rsu_task_set_prop_new(GDBusMethodInvocation *invocation,
+				  const gchar *path, GVariant *parameters);
 rsu_task_t *rsu_task_get_prop_new(GDBusMethodInvocation *invocation,
 				  const gchar *path, GVariant *parameters);
 rsu_task_t *rsu_task_get_props_new(GDBusMethodInvocation *invocation,

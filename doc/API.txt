@@ -221,8 +221,6 @@ interface.  The main points of interest are noted below:
 
 - The Rate property is currently read only.  This will change in the future.
 
-- The Volume property is read only.  This will change in the future.
-
 - The TransportPlaySpeeds property is not part of MPRIS specification: it
   is an array of strings, representing the range of play speeds supported by
   the renderer.  Clients can use this information to determine acceptable

@@ -81,6 +81,11 @@ static void prv_rsu_task_delete(rsu_task_t *task)
 		g_free(task->ut.get_prop.interface_name);
 		g_free(task->ut.get_prop.prop_name);
 		break;
+	case RSU_TASK_SET_PROP:
+		g_free(task->ut.set_prop.interface_name);
+		g_free(task->ut.set_prop.prop_name);
+		g_variant_unref(task->ut.set_prop.params);
+		break;
 	case RSU_TASK_OPEN_URI:
 		g_free(task->ut.open_uri.uri);
 		break;
@@ -143,6 +148,22 @@ rsu_task_t *rsu_task_get_props_new(GDBusMethodInvocation *invocation,
 
 	g_variant_get(parameters, "(s)", &task->ut.get_props.interface_name);
 	g_strstrip(task->ut.get_props.interface_name);
+
+	return task;
+}
+
+rsu_task_t *rsu_task_set_prop_new(GDBusMethodInvocation *invocation,
+				  const gchar *path, GVariant *parameters)
+{
+	rsu_task_t *task;
+
+	task = prv_device_task_new(RSU_TASK_SET_PROP, invocation, path, NULL);
+
+	g_variant_get(parameters, "(ssv)", &task->ut.set_prop.interface_name,
+		      &task->ut.set_prop.prop_name, &task->ut.set_prop.params);
+
+	g_strstrip(task->ut.set_prop.interface_name);
+	g_strstrip(task->ut.set_prop.prop_name);
 
 	return task;
 }

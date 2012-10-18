@@ -88,6 +88,10 @@ rsu_device_t *rsu_device_from_path(const gchar *path, GHashTable *device_list);
 rsu_device_context_t *rsu_device_get_context(rsu_device_t *device);
 void rsu_device_subscribe_to_service_changes(rsu_device_t *device);
 
+void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
+			 GCancellable *cancellable,
+			 rsu_upnp_task_complete_t cb,
+			 void *user_data);
 void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 			GCancellable *cancellable,
 			rsu_upnp_task_complete_t cb,

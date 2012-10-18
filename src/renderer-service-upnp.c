@@ -58,6 +58,7 @@
 #define RSU_INTERFACE_INVALIDATED_PROPERTIES "invalidated_properties"
 #define RSU_INTERFACE_GET "Get"
 #define RSU_INTERFACE_GET_ALL "GetAll"
+#define RSU_INTERFACE_SET "Set"
 #define RSU_INTERFACE_INTERFACE_NAME "interface_name"
 #define RSU_INTERFACE_PROPERTY_NAME "property_name"
 #define RSU_INTERFACE_PROPERTIES_VALUE "properties"
@@ -137,6 +138,14 @@ static const gchar g_rsu_server_introspection[] =
 	"      <arg type='a{sv}' name='"RSU_INTERFACE_PROPERTIES_VALUE"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"RSU_INTERFACE_SET"'>"
+	"      <arg type='s' name='"RSU_INTERFACE_INTERFACE_NAME"'"
+	"           direction='in'/>"
+	"      <arg type='s' name='"RSU_INTERFACE_PROPERTY_NAME"'"
+	"           direction='in'/>"
+	"      <arg type='v' name='"RSU_INTERFACE_VALUE"'"
+	"           direction='in'/>"
+	"    </method>"
 	"    <signal name='"RSU_INTERFACE_PROPERTIES_CHANGED"'>"
 	"      <arg type='s' name='"RSU_INTERFACE_INTERFACE_NAME"'/>"
 	"      <arg type='a{sv}' name='"RSU_INTERFACE_CHANGED_PROPERTIES"'/>"
@@ -202,7 +211,7 @@ static const gchar g_rsu_server_introspection[] =
 	"       name='"RSU_INTERFACE_PROP_TRANSPORT_PLAY_SPEEDS"'"
 	"       access='read'/>"
 	"    <property type='d' name='"RSU_INTERFACE_PROP_VOLUME"'"
-	"       access='read'/>"
+	"       access='readwrite'/>"
 	"    <property type='b' name='"RSU_INTERFACE_PROP_CAN_PLAY"'"
 	"       access='read'/>"
 	"    <property type='b' name='"RSU_INTERFACE_PROP_CAN_SEEK"'"
@@ -431,6 +440,11 @@ static void prv_process_async_task(rsu_context_t *context, rsu_task_t *task)
 		rsu_upnp_get_all_props(context->upnp, task,
 				       context->cancellable,
 				       prv_async_task_complete, context);
+		break;
+	case RSU_TASK_SET_PROP:
+		rsu_upnp_set_prop(context->upnp, task,
+				  context->cancellable,
+				  prv_async_task_complete, context);
 		break;
 	case RSU_TASK_PLAY:
 		rsu_upnp_play(context->upnp, task,
@@ -693,6 +707,8 @@ static void prv_props_method_call(GDBusConnection *conn,
 		task = rsu_task_get_props_new(invocation, object, parameters);
 	else if (!strcmp(method, RSU_INTERFACE_GET))
 		task = rsu_task_get_prop_new(invocation, object, parameters);
+	else if (!strcmp(method, RSU_INTERFACE_SET))
+		task = rsu_task_set_prop_new(invocation, object, parameters);
 	else
 		goto finished;
 

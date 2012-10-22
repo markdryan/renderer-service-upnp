@@ -74,7 +74,7 @@ static void prv_rsu_settings_get_keyfile_path(gchar **sys_path,
 	if (sys_path != NULL) {
 		*sys_path = NULL;
 
-		if (SYS_CONFIG_DIR && *SYS_CONFIG_DIR)
+		if (*SYS_CONFIG_DIR)
 			*sys_path = g_strdup_printf("%s/%s", SYS_CONFIG_DIR,
 						    RSU_SETTINGS_KEYFILE_NAME);
 	}

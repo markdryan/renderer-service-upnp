@@ -47,6 +47,7 @@ AC_DEFUN_ONCE([RSU_COMPILER_FLAGS], [
 		CFLAGS+=" -Wno-overlength-strings"
 
 		CFLAGS+=" -DG_DISABLE_DEPRECATED"
+		CFLAGS+=" -DGLIB_DISABLE_DEPRECATION_WARNINGS"
 	fi
 
 	CFLAGS+=" -Wno-format-extra-args"

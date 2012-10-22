@@ -427,7 +427,7 @@ gboolean rsu_device_new(GDBusConnection *connection,
 			rsu_device_t **device)
 {
 	rsu_device_t *dev = g_new0(rsu_device_t, 1);
-	GString *new_path = NULL;
+	GString *new_path;
 	unsigned int i;
 
 	prv_props_init(&dev->props);
@@ -460,8 +460,7 @@ gboolean rsu_device_new(GDBusConnection *connection,
 
 on_error:
 
-	if (new_path)
-		g_string_free(new_path, TRUE);
+	g_string_free(new_path, TRUE);
 
 	rsu_device_delete(dev);
 

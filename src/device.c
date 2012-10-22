@@ -460,8 +460,7 @@ gboolean rsu_device_new(GDBusConnection *connection,
 
 on_error:
 
-	if (new_path)
-		g_string_free(new_path, TRUE);
+	g_string_free(new_path, TRUE);
 
 	rsu_device_delete(dev);
 

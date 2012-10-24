@@ -100,46 +100,51 @@ Each server object exposes three separate interfaces:
 org.mpris.MediaPlayer2, org.mpris.MediaPlayer2.Player and
 com.intel.RendererServiceUPnP.PushHost.
 
+com.intel.UPnP.RendererDevice:
+-----------------------------
 
-org.mpris.MediaPlayer2
-----------------------
+The com.intel.UPnP.RendererDevice interface exposes information about the
+DMR via a number of d-Bus properties.  These properties are described
+below:
 
-This interface is part of the MPRIS standard and is documented in the
-MRPIS D-Bus Interface Specification document [1].  As the interface is
-well described in this document, this section will focus on the
-peculiarities of renderer-service-upnp's implementation of this
-interface rather than the interface itself.
-
-The main points of interest are:
-
-- The methods Raise and Quit are implemented but they do nothing.  The
-  CanRaise and CanQuit properties necessarily return false.
-
-- The property HasTrackList is always set to false.  This is because
-  TrackLists are not yet implemented.  Hopefully, this will change in
-  the future.
-
-- The property CanSetFullscreen is always set to false and Fullscreen
-  is not implemented.
-
-- The DesktopEntry is not implemented.
-
-In addition to these restrictions, renderer-service-upnp's
-implementation of org.mpris.MediaPlayer2 exposes one extra property
-that is not part of the MRPIS2 specification.  The property is called,
-ProtocolInfo and its details are given in the table below.
-
-|---------------------------------------------------------------------------|
-|     Name        | Type | m/o* |              Description                  |
-|---------------------------------------------------------------------------|
-| ProtocolInfo    |  s   |   m  | A string that identifies all of the file  |
-|                 |      |      | formats and network protocol combinations |
-|                 |      |      | that the renderer supports.               |
-|---------------------------------------------------------------------------|
+|------------------------------------------------------------------------------|
+|     Name          | Type  | m/o* |              Description                  |
+|------------------------------------------------------------------------------|
+| DeviceType        |   s   |  m   | The UPnP type of the device, e.g.,        |
+|                   |       |      | urn:schemas-upnp-org:device:MediaServer:1 |
+|------------------------------------------------------------------------------|
+| UDN               |   s   |  m   | The Unique Device Name of the server.     |
+|------------------------------------------------------------------------------|
+| FriendlyName      |   s   |  m   | The friendly name of the media server.    |
+-------------------------------------------------------------------------------|
+| IconURL           |   s   |  o   | A URL pointing to an icon that            |
+|                   |       |      | graphically identifies the server         |
+|------------------------------------------------------------------------------|
+| Manufacturer      |   s   |  m   | A string identifying the manufacturer of  |
+|                   |       |      | the server                                |
+|------------------------------------------------------------------------------|
+| ManufacturerUrl   |   s   |  o   | A URL pointing to the manufacturer's web  |
+|                   |       |      |  site.                                    |
+|------------------------------------------------------------------------------|
+| ModelDescription  |   s   |  o   | A description of the server.              |
+|------------------------------------------------------------------------------|
+| ModelName         |   s   |  m   | The model name of the server.             |
+|------------------------------------------------------------------------------|
+| ModelNumber       |   s   |  o   | The server's version number               |
+|------------------------------------------------------------------------------|
+| SerialNumber      |   s   |  o   | The server's serial number                |
+|------------------------------------------------------------------------------|
+| PresentationURL   |   s   |  o   | The presentation URL of the server, i.e., |
+|                   |       |      | a link to it's HTML management interface. |
+|------------------------------------------------------------------------------|
+| ProtocolInfo      |   s   |   m  | A string that identifies all of the file  |
+|                   |       |      | formats and network protocol combinations |
+|                   |       |      | that the renderer supports.  (1)          |
+|------------------------------------------------------------------------------|
 
 (* where m/o indicates whether the property is optional or mandatory )
 
-The idea behind the ProtocolInfo property is a little complicated and
+(1) The idea behind the ProtocolInfo property is a little complicated and
 requires further discussion.  The Protocol info field is a comma
 separated list of protocol info values.  Each protocol info value
 consists of 4 fields separated by colons.  Unfortunately, the format
@@ -175,6 +180,30 @@ it wishes to play, and then invoking this object's
 GetCompatibleResource method, passing the renderer's ProtocolInfo
 string as a parameter.  This method will then return the most suitable
 URL for the renderer.
+
+
+org.mpris.MediaPlayer2
+----------------------
+
+This interface is part of the MPRIS standard and is documented in the
+MRPIS D-Bus Interface Specification document [1].  As the interface is
+well described in this document, this section will focus on the
+peculiarities of renderer-service-upnp's implementation of this
+interface rather than the interface itself.
+
+The main points of interest are:
+
+- The methods Raise and Quit are implemented but they do nothing.  The
+  CanRaise and CanQuit properties necessarily return false.
+
+- The property HasTrackList is always set to false.  This is because
+  TrackLists are not yet implemented.  Hopefully, this will change in
+  the future.
+
+- The property CanSetFullscreen is always set to false and Fullscreen
+  is not implemented.
+
+- The DesktopEntry is not implemented.
 
 
 org.mpris.MediaPlayer2.Player

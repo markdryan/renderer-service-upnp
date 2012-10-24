@@ -69,6 +69,8 @@ static void prv_props_init(rsu_props_t *props)
 						  NULL, prv_unref_variant);
 	props->player_props = g_hash_table_new_full(g_str_hash, g_str_equal,
 						    NULL, prv_unref_variant);
+	props->device_props = g_hash_table_new_full(g_str_hash, g_str_equal,
+						    NULL, prv_unref_variant);
 	props->synced = FALSE;
 }
 
@@ -76,6 +78,7 @@ static void prv_props_free(rsu_props_t *props)
 {
 	g_hash_table_unref(props->root_props);
 	g_hash_table_unref(props->player_props);
+	g_hash_table_unref(props->device_props);
 }
 
 static void prv_service_proxies_free(rsu_service_proxies_t *service_proxies)
@@ -512,7 +515,10 @@ static void prv_get_prop(rsu_async_cb_data_t *cb_data)
 	rsu_task_get_prop_t *get_prop = &cb_data->task->ut.get_prop;
 	GVariant *res = NULL;
 
-	if (!strcmp(get_prop->interface_name, RSU_INTERFACE_SERVER)) {
+	if (!strcmp(get_prop->interface_name, RSU_INTERFACE_RENDERER_DEVICE)) {
+		res = g_hash_table_lookup(cb_data->device->props.device_props,
+					  get_prop->prop_name);
+	} else if (!strcmp(get_prop->interface_name, RSU_INTERFACE_SERVER)) {
 		res = g_hash_table_lookup(cb_data->device->props.root_props,
 					  get_prop->prop_name);
 	} else if (!strcmp(get_prop->interface_name, RSU_INTERFACE_PLAYER)) {
@@ -524,6 +530,11 @@ static void prv_get_prop(rsu_async_cb_data_t *cb_data)
 		if (!res)
 			res = g_hash_table_lookup(
 				cb_data->device->props.player_props,
+				get_prop->prop_name);
+
+		if (!res)
+			res = g_hash_table_lookup(
+				cb_data->device->props.device_props,
 				get_prop->prop_name);
 	} else {
 		cb_data->error = g_error_new(RSU_ERROR,
@@ -562,13 +573,17 @@ static void prv_get_props(rsu_async_cb_data_t *cb_data)
 
 	vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
-	if (!strcmp(get_props->interface_name, RSU_INTERFACE_SERVER)) {
+	if (!strcmp(get_props->interface_name, RSU_INTERFACE_RENDERER_DEVICE)) {
+		prv_add_props(cb_data->device->props.device_props, vb);
+	} else if (!strcmp(get_props->interface_name, RSU_INTERFACE_SERVER)) {
 		prv_add_props(cb_data->device->props.root_props, vb);
+		prv_add_props(cb_data->device->props.device_props, vb);
 	} else if (!strcmp(get_props->interface_name, RSU_INTERFACE_PLAYER)) {
 		prv_add_props(cb_data->device->props.player_props, vb);
 	} else if (!strcmp(get_props->interface_name, "")) {
 		prv_add_props(cb_data->device->props.root_props, vb);
 		prv_add_props(cb_data->device->props.player_props, vb);
+		prv_add_props(cb_data->device->props.device_props, vb);
 	} else {
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_UNKNOWN_INTERFACE,
@@ -1129,7 +1144,7 @@ static void prv_process_protocol_info(rsu_device_t *device,
 	types = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
 	val = g_variant_ref_sink(g_variant_new_string(protocol_info));
-	g_hash_table_insert(device->props.root_props,
+	g_hash_table_insert(device->props.device_props,
 			    RSU_INTERFACE_PROP_PROTOCOL_INFO,
 			    val);
 
@@ -1402,13 +1417,73 @@ exit:
 	return;
 }
 
+static void prv_update_device_props(GUPnPDeviceInfo *proxy, GHashTable *props)
+{
+	GVariant *val;
+	gchar *str;
+
+	val = g_variant_ref_sink(g_variant_new_string(
+				gupnp_device_info_get_device_type(proxy)));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_DEVICE_TYPE, val);
+
+	val = g_variant_ref_sink(g_variant_new_string(
+					gupnp_device_info_get_udn(proxy)));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_UDN, val);
+
+	str = gupnp_device_info_get_friendly_name(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_FRIENDLY_NAME, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_icon_url(proxy, NULL, -1, -1, -1, FALSE,
+					     NULL, NULL, NULL, NULL);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_ICON_URL, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_manufacturer(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_MANUFACTURER, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_manufacturer_url(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_MANUFACTURER_URL, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_model_description(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_MODEL_DESCRIPTION, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_model_name(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_MODEL_NAME, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_model_number(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_MODEL_NUMBER, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_serial_number(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_SERIAL_NUMBER, val);
+	g_free(str);
+
+	str = gupnp_device_info_get_presentation_url(proxy);
+	val = g_variant_ref_sink(g_variant_new_string(str));
+	g_hash_table_insert(props, RSU_INTERFACE_PROP_PRESENTATION_URL, val);
+	g_free(str);
+
+}
+
 static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 {
 	GVariant *val;
 	GUPnPDeviceInfo *info;
 	rsu_device_context_t *context;
 	rsu_props_t *props = &device->props;
-	gchar *friendly_name;
 	GVariantBuilder *changed_props_vb;
 	GVariant *changed_props;
 	double min_rate = 0;
@@ -1434,11 +1509,13 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 			    g_variant_ref(val));
 
 	info = (GUPnPDeviceInfo *) context->device_proxy;
-	friendly_name = gupnp_device_info_get_friendly_name(info);
-	val = g_variant_ref_sink(g_variant_new_string(friendly_name));
-	g_free(friendly_name);
+
+	prv_update_device_props(info, props->device_props);
+
+	val = g_hash_table_lookup(props->device_props,
+			    RSU_INTERFACE_PROP_FRIENDLY_NAME);
 	g_hash_table_insert(props->root_props, RSU_INTERFACE_PROP_IDENTITY,
-			    val);
+			    g_variant_ref(val));
 
 	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 

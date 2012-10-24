@@ -173,6 +173,11 @@ AC_SUBST(RSU_INTERFACE_MANAGER)
 AC_DEFINE([RSU_INTERFACE_MANAGER], "com.intel.RendererServiceUPnP.Manager",
 			       [d-Bus Name of renderer-service-upnp main interface])
 
+RSU_INTERFACE_RENDERER_DEVICE=com.intel.UPnP.RendererDevice
+AC_SUBST(RSU_INTERFACE_RENDERER_DEVICE)
+AC_DEFINE([RSU_INTERFACE_RENDERER_DEVICE], "com.intel.UPnP.RendererDevice",
+			       [d-Bus Name of renderer-service-upnp device interface])
+
 RSU_INTERFACE_PUSH_HOST=com.intel.RendererServiceUPnP.PushHost
 AC_SUBST(RSU_INTERFACE_PUSH_HOST)
 AC_DEFINE([RSU_INTERFACE_PUSH_HOST], "com.intel.RendererServiceUPnP.PushHost",

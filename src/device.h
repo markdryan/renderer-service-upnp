@@ -56,6 +56,7 @@ typedef struct rsu_props_t_ rsu_props_t;
 struct rsu_props_t_ {
 	GHashTable *root_props;
 	GHashTable *player_props;
+	GHashTable *device_props;
 	gboolean synced;
 };
 

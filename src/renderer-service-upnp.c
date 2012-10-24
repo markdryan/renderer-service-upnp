@@ -162,8 +162,6 @@ static const gchar g_rsu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='as' name='"RSU_INTERFACE_PROP_SUPPORTED_MIME"'"
 	"       access='read'/>"
-	"    <property type='s' name='"RSU_INTERFACE_PROP_PROTOCOL_INFO"'"
-	"       access='read'/>"
 	"  </interface>"
 	"  <interface name='"RSU_INTERFACE_PLAYER"'>"
 	"    <method name='"RSU_INTERFACE_PLAY"'>"
@@ -234,8 +232,33 @@ static const gchar g_rsu_server_introspection[] =
 	"           direction='in'/>"
 	"    </method>"
 	"  </interface>"
+	"  <interface name='"RSU_INTERFACE_RENDERER_DEVICE"'>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_DEVICE_TYPE"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_UDN"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_FRIENDLY_NAME"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_ICON_URL"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_MANUFACTURER"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_MANUFACTURER_URL"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_MODEL_DESCRIPTION"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_MODEL_NAME"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_MODEL_NUMBER"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_SERIAL_NUMBER"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_PRESENTATION_URL"'"
+	"       access='read'/>"
+	"    <property type='s' name='"RSU_INTERFACE_PROP_PROTOCOL_INFO"'"
+	"       access='read'/>"
+	"  </interface>"
 	"</node>";
-
 
 static gboolean prv_process_task(gpointer user_data);
 
@@ -284,6 +307,15 @@ static void prv_rsu_push_host_method_call(GDBusConnection *conn,
 					  GDBusMethodInvocation *invocation,
 					  gpointer user_data);
 
+static void prv_renderer_device_method_call(GDBusConnection *conn,
+					    const gchar *sender,
+					    const gchar *object,
+					    const gchar *interface,
+					    const gchar *method,
+					    GVariant *parameters,
+					    GDBusMethodInvocation *invocation,
+					    gpointer user_data);
+
 static const GDBusInterfaceVTable g_rsu_vtable = {
 	prv_rsu_method_call,
 	NULL,
@@ -314,11 +346,18 @@ static const GDBusInterfaceVTable g_rsu_push_host_vtable = {
 	NULL
 };
 
+static const GDBusInterfaceVTable g_device_vtable = {
+	prv_renderer_device_method_call,
+	NULL,
+	NULL
+};
+
 static const GDBusInterfaceVTable *g_server_vtables[RSU_INTERFACE_INFO_MAX] = {
 	&g_props_vtable,
 	&g_rsu_device_vtable,
 	&g_rsu_player_vtable,
-	&g_rsu_push_host_vtable
+	&g_rsu_push_host_vtable,
+	&g_device_vtable
 };
 
 static void prv_free_rsu_task_cb(gpointer data, gpointer user_data)
@@ -757,6 +796,18 @@ static void prv_rsu_push_host_method_call(GDBusConnection *conn,
 on_error:
 
 	return;
+}
+
+static void prv_renderer_device_method_call(GDBusConnection *conn,
+					    const gchar *sender,
+					    const gchar *object,
+					    const gchar *interface,
+					    const gchar *method,
+					    GVariant *parameters,
+					    GDBusMethodInvocation *invocation,
+					    gpointer user_data)
+{
+	/* Nothing right now */
 }
 
 static void prv_found_media_server(const gchar *path, void *user_data)

@@ -1,3 +1,19 @@
+version 0.1.0
+	- Fixed bug #34: RSU crashes when pushing an image to XBMC
+	        https://github.com/01org/renderer-service-upnp/issues/34
+	- The com.intel.UPnP.RendererDevice interface has been added
+	        https://github.com/01org/renderer-service-upnp/issues/44
+	- The org.mpris.MediaPlayer2.Player Volume property is now writable.
+	        https://github.com/01org/renderer-service-upnp/issues/19
+	- The ProtocolInfo property has moved from the org.mpris.MediaPlayer2
+	  to the new com.intel.UPnP.RendererDevice interface.
+	- The org.mpris.MediaPlayer2.Player.Rate and the
+	  org.mpris.MediaPlayer2.Player.PlaySpeed are now computed correctly
+	  according to the MPRIS standard.
+	- A new property org.mpris.MediaPlayer2.Player.TransportPlaySpeeds
+	  has been added to inform clients of the playspeeds supported by
+	  Renderers.
+
 version 0.0.4
 	- Fixed bug #20: RSU executes commands of dead children
 		https://github.com/01org/renderer-service-upnp/issues/20

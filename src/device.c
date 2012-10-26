@@ -144,6 +144,9 @@ static void prv_emit_signal_properties_changed(rsu_device_t *device,
 					       const char *interface,
 					       GVariant *changed_props)
 {
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
+	gchar *params;
+#endif
 	GVariant *val = g_variant_ref_sink(g_variant_new("(s@a{sv}as)",
 					   interface,
 					   changed_props,
@@ -153,7 +156,12 @@ static void prv_emit_signal_properties_changed(rsu_device_t *device,
 		      RSU_INTERFACE_PROPERTIES,
 		      RSU_INTERFACE_PROPERTIES_CHANGED,
 		      device->path);
-	RSU_LOG_DEBUG("Params: %s", g_variant_print(val, FALSE));
+
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_DEBUG
+	params = g_variant_print(val, FALSE);
+	RSU_LOG_DEBUG("Params: %s", params);
+	g_free(params);
+#endif
 
 	g_dbus_connection_emit_signal(device->connection,
 				      NULL,

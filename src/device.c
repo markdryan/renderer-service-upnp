@@ -1311,12 +1311,18 @@ error:
 	return 0.0;
 }
 
-static gint prv_compare_rationals(gconstpointer a, gconstpointer b)
+static inline gboolean prv_rational_is_invalid(const char *val)
 {
-	long a_numerator = prv_rational_get_numerator((char *) a);
-	long b_numerator = prv_rational_get_numerator((char *) b);
-	long a_denominator = prv_rational_get_denominator((char *) a);
-	long b_denominator = prv_rational_get_denominator((char *) b);
+	return (prv_rational_get_numerator(val) == 0) ||
+		(prv_rational_get_denominator(val) == 0);
+}
+
+static gint prv_compare_rationals(const gchar *a, const gchar *b)
+{
+	long a_numerator = prv_rational_get_numerator(a);
+	long b_numerator = prv_rational_get_numerator(b);
+	long a_denominator = prv_rational_get_denominator(a);
+	long b_denominator = prv_rational_get_denominator(b);
 
 	return (a_numerator * b_denominator) - (b_numerator * a_denominator);
 }
@@ -1344,7 +1350,7 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 	for (; list != NULL; list = list->next) {
 		rate = (char *)list->data;
 
-		if (prv_compare_rationals(rate, "0") == 0)
+		if (prv_rational_is_invalid(rate))
 			continue;
 
 		g_variant_builder_add(&vb, "s", rate);
@@ -1599,7 +1605,7 @@ static void prv_simple_call_cb(GUPnPServiceProxy *proxy,
 	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
 }
 
-static void prv_rsu_set_volume(rsu_async_cb_data_t *cb_data, GVariant *params)
+static void prv_set_volume(rsu_async_cb_data_t *cb_data, GVariant *params)
 {
 	double volume;
 
@@ -1644,7 +1650,7 @@ void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.rc_proxy;
 
-	prv_rsu_set_volume(cb_data, set_prop->params);
+	prv_set_volume(cb_data, set_prop->params);
 	return;
 
 property_not_managed:

@@ -22,6 +22,7 @@
 
 
 #include <string.h>
+#include <math.h>
 
 #include <libgupnp/gupnp-control-point.h>
 #include <libgupnp-av/gupnp-av.h>
@@ -1292,10 +1293,11 @@ exit:
 	return 1;
 }
 
-static double prv_rational_to_double(const char *r)
+static double prv_rational_to_double(const char *r, double precision)
 {
 	long p;
 	long q;
+	double result;
 
 	p = prv_rational_get_numerator(r);
 	if (p == 0)
@@ -1305,7 +1307,12 @@ static double prv_rational_to_double(const char *r)
 	if (q == 0)
 		goto error;
 
-	return (double)p/(double)q;
+	result = (double)p/(double)q;
+
+	if (precision != 0)
+		result = round(result/precision) * precision;
+
+	return result;
 
 error:
 	return 0.0;
@@ -1336,6 +1343,7 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 	char *max_rate_str;
 	GList *list;
 	GVariantBuilder vb;
+	const double precision = 0.01;
 
 	if ((svi == NULL) || (svi->allowed_values == NULL))
 		goto exit;
@@ -1363,8 +1371,8 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 
 	*tp_speeds = g_variant_builder_end(&vb);
 
-	*min_rate = prv_rational_to_double(min_rate_str);
-	*max_rate = prv_rational_to_double(max_rate_str);
+	*min_rate = prv_rational_to_double(min_rate_str, precision);
+	*max_rate = prv_rational_to_double(max_rate_str, precision);
 
 exit:
 	return;

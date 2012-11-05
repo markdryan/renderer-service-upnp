@@ -44,7 +44,8 @@ renderer_service_upnp_LDADD = $(GLIB_LIBS)	\
 			      $(GSSDP_LIBS)	\
 			      $(GUPNP_LIBS)	\
 			      $(GUPNPAV_LIBS)	\
-			      $(SOUP_LIBS)
+			      $(SOUP_LIBS)	\
+			      -lm
 
 dbussessiondir = @DBUS_SESSION_DIR@
 dbussession_DATA = src/com.intel.renderer-service-upnp.service

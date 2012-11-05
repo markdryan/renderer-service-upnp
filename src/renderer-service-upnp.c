@@ -207,7 +207,7 @@ static const gchar g_rsu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='d' name='"RSU_INTERFACE_PROP_MAXIMUM_RATE"'"
 	"       access='read'/>"
-	"    <property type='as'"
+	"    <property type='ad'"
 	"       name='"RSU_INTERFACE_PROP_TRANSPORT_PLAY_SPEEDS"'"
 	"       access='read'/>"
 	"    <property type='d' name='"RSU_INTERFACE_PROP_VOLUME"'"

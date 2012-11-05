@@ -1348,7 +1348,7 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 	if ((svi == NULL) || (svi->allowed_values == NULL))
 		goto exit;
 
-	g_variant_builder_init(&vb, G_VARIANT_TYPE("as"));
+	g_variant_builder_init(&vb, G_VARIANT_TYPE("ad"));
 
 	list = svi->allowed_values;
 
@@ -1361,7 +1361,8 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 		if (prv_rational_is_invalid(rate))
 			continue;
 
-		g_variant_builder_add(&vb, "s", rate);
+		g_variant_builder_add(&vb, "d",
+				      prv_rational_to_double(rate, precision));
 
 		if (prv_compare_rationals(min_rate_str, rate) > 0)
 			min_rate_str = rate;

@@ -285,6 +285,7 @@ void rsu_device_delete(void *device)
 
 		if (dev->transport_play_speeds != NULL)
 			g_ptr_array_free(dev->transport_play_speeds, TRUE);
+		g_free(dev->rate);
 		g_free(dev);
 	}
 }
@@ -469,6 +470,8 @@ gboolean rsu_device_new(GDBusConnection *connection,
 	}
 
 	dev->path = g_string_free(new_path, FALSE);
+
+	dev->rate = g_strdup("1");
 
 	*device = dev;
 	return TRUE;
@@ -1046,7 +1049,9 @@ static void prv_last_change_cb(GUPnPServiceProxy *proxy,
 		prv_change_props(device->props.player_props,
 				 RSU_INTERFACE_PROP_RATE, val,
 				 changed_props_vb);
-		g_free(play_speed);
+
+		g_free(device->rate);
+		device->rate = play_speed;
 	}
 
 	if (state) {
@@ -1643,6 +1648,89 @@ static void prv_set_volume(rsu_async_cb_data_t *cb_data, GVariant *params)
 						 NULL);
 }
 
+static GVariant *prv_get_rate_value_from_double(GVariant *params,
+						gchar **upnp_rate,
+						rsu_async_cb_data_t *cb_data)
+{
+	GVariant *val = NULL;
+	GVariant *tps;
+	GVariantIter iter;
+	double tps_value;
+	double mpris_rate;
+	GPtrArray *upnp_tp_speeds;
+	int i;
+
+	tps = g_hash_table_lookup(cb_data->device->props.player_props,
+				  RSU_INTERFACE_PROP_TRANSPORT_PLAY_SPEEDS);
+
+	if (tps == NULL) {
+		cb_data->error = g_error_new(RSU_ERROR,
+					     RSU_ERROR_OPERATION_FAILED,
+					     "TransportPlaySpeeds list"
+					     " is empty");
+		goto exit;
+	}
+
+	mpris_rate = g_variant_get_double(params);
+
+	upnp_tp_speeds = cb_data->device->transport_play_speeds;
+
+	i = 0;
+
+	g_variant_iter_init(&iter, tps);
+	while (g_variant_iter_next(&iter, "d", &tps_value)) {
+
+		if (fabs(mpris_rate - tps_value) <= 0.01) {
+			val = g_variant_ref_sink(
+				g_variant_new_double(tps_value));
+
+			*upnp_rate = g_ptr_array_index(upnp_tp_speeds, i);
+
+			break;
+		}
+
+		i++;
+	}
+
+	if (val == NULL)
+		cb_data->error =
+			g_error_new(RSU_ERROR, RSU_ERROR_BAD_QUERY,
+				    "Value %.2f not in TransportPlaySpeeds",
+				    mpris_rate);
+
+exit:
+
+	return val;
+}
+
+static void prv_set_rate(GVariant *params, rsu_async_cb_data_t *cb_data)
+{
+	GVariant *val;
+	gchar *rate;
+
+	if (g_variant_is_of_type(params, G_VARIANT_TYPE_DOUBLE) == FALSE) {
+		cb_data->error = g_error_new(RSU_ERROR, RSU_ERROR_BAD_QUERY,
+					     "Parameter is not a double");
+		goto exit;
+	}
+
+	rate = NULL;
+
+	val = prv_get_rate_value_from_double(params, &rate, cb_data);
+	if (val == NULL)
+		goto exit;
+
+	g_free(cb_data->device->rate);
+	cb_data->device->rate = g_strdup(rate);
+
+	prv_change_props(cb_data->device->props.player_props,
+			 RSU_INTERFACE_PROP_RATE, val, NULL);
+
+exit:
+
+	return;
+}
+
 void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb,
@@ -1662,6 +1750,11 @@ void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 					     "Interface %s not managed "
 					     "for property setting",
 					     set_prop->interface_name);
+		goto exit;
+	}
+
+	if (g_strcmp0(set_prop->prop_name, RSU_INTERFACE_PROP_RATE) == 0) {
+		prv_set_rate(set_prop->params, cb_data);
 		goto exit;
 	}
 
@@ -1789,8 +1882,8 @@ void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 						 prv_simple_call_cb,
 						 cb_data,
 						 "InstanceID", G_TYPE_INT, 0,
-						 "Speed", G_TYPE_STRING, "1",
-						 NULL);
+						 "Speed", G_TYPE_STRING,
+						 device->rate, NULL);
 }
 
 void rsu_device_play_pause(rsu_device_t *device, rsu_task_t *task,

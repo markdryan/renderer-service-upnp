@@ -70,6 +70,7 @@ struct rsu_device_t_ {
 	guint timeout_id;
 	guint max_volume;
 	GPtrArray *transport_play_speeds;
+	gchar *rate;
 };
 
 gboolean rsu_device_new(GDBusConnection *connection,

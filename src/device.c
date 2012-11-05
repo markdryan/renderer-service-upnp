@@ -282,6 +282,9 @@ void rsu_device_delete(void *device)
 		g_ptr_array_unref(dev->contexts);
 		g_free(dev->path);
 		prv_props_free(&dev->props);
+
+		if (dev->transport_play_speeds != NULL)
+			g_ptr_array_free(dev->transport_play_speeds, TRUE);
 		g_free(dev);
 	}
 }
@@ -1335,7 +1338,8 @@ static gint prv_compare_rationals(const gchar *a, const gchar *b)
 }
 
 static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
-				 GVariant **tp_speeds,
+				 GVariant **mpris_tp_speeds,
+				 GPtrArray **upnp_tp_speeds,
 				 double *min_rate, double *max_rate)
 {
 	char *rate;
@@ -1355,11 +1359,18 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 	min_rate_str = list->data;
 	max_rate_str = min_rate_str;
 
+	if (*upnp_tp_speeds != NULL)
+		g_ptr_array_free(*upnp_tp_speeds, TRUE);
+
+	*upnp_tp_speeds = g_ptr_array_new_with_free_func(g_free);
+
 	for (; list != NULL; list = list->next) {
 		rate = (char *)list->data;
 
 		if (prv_rational_is_invalid(rate))
 			continue;
+
+		g_ptr_array_add(*upnp_tp_speeds, g_strdup(rate));
 
 		g_variant_builder_add(&vb, "d",
 				      prv_rational_to_double(rate, precision));
@@ -1370,7 +1381,7 @@ static void prv_get_rates_values(const GUPnPServiceStateVariableInfo *svi,
 			max_rate_str = rate;
 	}
 
-	*tp_speeds = g_variant_builder_end(&vb);
+	*mpris_tp_speeds = g_variant_builder_end(&vb);
 
 	*min_rate = prv_rational_to_double(min_rate_str, precision);
 	*max_rate = prv_rational_to_double(max_rate_str, precision);
@@ -1380,7 +1391,8 @@ exit:
 }
 
 static void prv_get_services_states_values(GUPnPDeviceInfo *info,
-					   GVariant **tp_speeds,
+					   GVariant **mpris_tp_speeds,
+					   GPtrArray **upnp_tp_speeds,
 					   guint *max_volume,
 					   double *min_rate, double *max_rate)
 {
@@ -1421,7 +1433,8 @@ static void prv_get_services_states_values(GUPnPDeviceInfo *info,
 			svi = gupnp_service_introspection_get_state_variable(
 				introspection, "TransportPlaySpeed");
 
-			prv_get_rates_values(svi, tp_speeds,
+			prv_get_rates_values(svi,
+					     mpris_tp_speeds, upnp_tp_speeds,
 					     min_rate, max_rate);
 		} else {
 			svi = gupnp_service_introspection_get_state_variable(
@@ -1511,7 +1524,7 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	GVariant *changed_props;
 	double min_rate = 0;
 	double max_rate = 0;
-	GVariant *transport_play_speeds = NULL;
+	GVariant *mpris_transport_play_speeds = NULL;
 
 	context = rsu_device_get_context(device);
 
@@ -1541,7 +1554,8 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 
 	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
-	prv_get_services_states_values(info, &transport_play_speeds,
+	prv_get_services_states_values(info, &mpris_transport_play_speeds,
+				       &device->transport_play_speeds,
 				       &device->max_volume,
 				       &min_rate, &max_rate);
 
@@ -1559,8 +1573,8 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 				 val, changed_props_vb);
 	}
 
-	if (transport_play_speeds != NULL) {
-		val = g_variant_ref_sink(transport_play_speeds);
+	if (mpris_transport_play_speeds != NULL) {
+		val = g_variant_ref_sink(mpris_transport_play_speeds);
 		prv_change_props(device->props.player_props,
 				 RSU_INTERFACE_PROP_TRANSPORT_PLAY_SPEEDS,
 				 val, changed_props_vb);

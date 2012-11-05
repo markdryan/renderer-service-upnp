@@ -1370,7 +1370,7 @@ exit:
 	return;
 }
 
-static void prv_get_services_states_maxima(GUPnPDeviceInfo *info,
+static void prv_get_services_states_values(GUPnPDeviceInfo *info,
 					   GVariant **tp_speeds,
 					   guint *max_volume,
 					   double *min_rate, double *max_rate)
@@ -1502,7 +1502,6 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	GVariant *changed_props;
 	double min_rate = 0;
 	double max_rate = 0;
-	guint max_volume = 0;
 	GVariant *transport_play_speeds = NULL;
 
 	context = rsu_device_get_context(device);
@@ -1533,8 +1532,9 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 
 	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
-	prv_get_services_states_maxima(info, &transport_play_speeds,
-				       &max_volume, &min_rate, &max_rate);
+	prv_get_services_states_values(info, &transport_play_speeds,
+				       &device->max_volume,
+				       &min_rate, &max_rate);
 
 	if (min_rate != 0) {
 		val = g_variant_ref_sink(g_variant_new_double(min_rate));
@@ -1556,8 +1556,6 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 				 RSU_INTERFACE_PROP_TRANSPORT_PLAY_SPEEDS,
 				 val, changed_props_vb);
 	}
-
-	device->max_volume = max_volume;
 
 	prv_add_all_actions(device, changed_props_vb);
 	device->props.synced = TRUE;
@@ -1635,11 +1633,22 @@ void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 					device);
 
 	if (g_strcmp0(set_prop->interface_name, RSU_INTERFACE_PLAYER) != 0 &&
-	    g_strcmp0(set_prop->interface_name, "") != 0)
-		goto property_not_managed;
+	    g_strcmp0(set_prop->interface_name, "") != 0) {
+		cb_data->error = g_error_new(RSU_ERROR,
+					     RSU_ERROR_UNKNOWN_INTERFACE,
+					     "Interface %s not managed "
+					     "for property setting",
+					     set_prop->interface_name);
+		goto exit;
+	}
 
-	if (g_strcmp0(set_prop->prop_name, RSU_INTERFACE_PROP_VOLUME) != 0)
-		goto property_not_managed;
+	if (g_strcmp0(set_prop->prop_name, RSU_INTERFACE_PROP_VOLUME) != 0) {
+		cb_data->error = g_error_new(RSU_ERROR,
+					     RSU_ERROR_UNKNOWN_PROPERTY,
+					     "Property %s not managed for"
+					     " setting", set_prop->prop_name);
+		goto exit;
+	}
 
 	context = rsu_device_get_context(device);
 
@@ -1653,12 +1662,7 @@ void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 	prv_set_volume(cb_data, set_prop->params);
 	return;
 
-property_not_managed:
-
-	cb_data->error = g_error_new(RSU_ERROR, RSU_ERROR_UNKNOWN_PROPERTY,
-				     "Property %s/%s not managed for setting",
-				     set_prop->interface_name,
-				     set_prop->prop_name);
+exit:
 
 	g_idle_add(rsu_async_complete_task, cb_data);
 }

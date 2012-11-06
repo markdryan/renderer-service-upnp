@@ -1,3 +1,10 @@
+version 0.2.0
+    - The property org.mpris.MediaPlayer2.Player.TransportPlaySpeeds
+      changed from an array of string values to an array of double
+      values.
+    - The org.mpris.MediaPlayer2.Player.Rate property is now writable.
+            https://github.com/01org/renderer-service-upnp/issues/19
+
 version 0.1.0
 	- Fixed bug #34: RSU crashes when pushing an image to XBMC
 	        https://github.com/01org/renderer-service-upnp/issues/34

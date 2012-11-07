@@ -81,6 +81,8 @@
 #define RSU_INTERFACE_SEEK "Seek"
 #define RSU_INTERFACE_SET_POSITION "SetPosition"
 
+#define RSU_INTERFACE_CANCEL "Cancel"
+
 typedef struct rsu_context_t_ rsu_context_t;
 struct rsu_context_t_ {
 	bool error;
@@ -244,6 +246,8 @@ static const gchar g_rsu_server_introspection[] =
 	"    </method>"
 	"  </interface>"
 	"  <interface name='"RSU_INTERFACE_RENDERER_DEVICE"'>"
+	"    <method name='"RSU_INTERFACE_CANCEL"'>"
+	"    </method>"
 	"    <property type='s' name='"RSU_INTERFACE_PROP_DEVICE_TYPE"'"
 	"       access='read'/>"
 	"    <property type='s' name='"RSU_INTERFACE_PROP_UDN"'"
@@ -838,7 +842,33 @@ static void prv_renderer_device_method_call(GDBusConnection *conn,
 					    GDBusMethodInvocation *invocation,
 					    gpointer user_data)
 {
-	/* Nothing right now */
+	const gchar *device_id = NULL;
+	GError* error = NULL;
+	const gchar *client_name;
+	const rsu_task_queue_key_t *queue_id;
+
+	device_id = prv_get_device_id(object, &error);
+	if (!device_id) {
+		g_dbus_method_invocation_return_gerror(invocation, error);
+		g_error_free(error);
+
+		goto finished;
+	}
+
+	if (!strcmp(method, RSU_INTERFACE_CANCEL)) {
+		client_name = g_dbus_method_invocation_get_sender(invocation);
+
+		queue_id = rsu_task_processor_lookup_queue(g_context.processor,
+							client_name, device_id);
+		if (queue_id)
+			rsu_task_processor_cancel_queue(queue_id);
+
+		g_dbus_method_invocation_return_value(invocation, NULL);
+	}
+
+finished:
+
+		return;
 }
 
 static void prv_found_media_server(const gchar *path)

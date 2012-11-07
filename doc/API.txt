@@ -181,6 +181,15 @@ GetCompatibleResource method, passing the renderer's ProtocolInfo
 string as a parameter.  This method will then return the most suitable
 URL for the renderer.
 
+Methods:
+---------
+
+The com.intel.UPnP.RendererDevice interface currently exposes a single method:
+
+Cancel() -> void
+
+Cancels all requests a client has outstanding on that server.
+
 
 org.mpris.MediaPlayer2
 ----------------------

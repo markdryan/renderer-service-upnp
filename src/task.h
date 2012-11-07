@@ -26,6 +26,8 @@
 #include <gio/gio.h>
 #include <glib.h>
 
+#include "task-atom.h"
+
 enum rsu_task_type_t_ {
 	RSU_TASK_GET_VERSION,
 	RSU_TASK_GET_SERVERS,
@@ -86,6 +88,7 @@ struct rsu_task_host_uri_t_ {
 
 typedef struct rsu_task_t_ rsu_task_t;
 struct rsu_task_t_ {
+	rsu_task_atom_t base; /* pseudo inheritance - MUST be first field */
 	rsu_task_type_t type;
 	gchar *path;
 	const gchar *result_format;
@@ -134,9 +137,9 @@ rsu_task_t *rsu_task_host_uri_new(GDBusMethodInvocation *invocation,
 				  const gchar *path, GVariant *parameters);
 rsu_task_t *rsu_task_remove_uri_new(GDBusMethodInvocation *invocation,
 				    const gchar *path, GVariant *parameters);
-void rsu_task_complete_and_delete(rsu_task_t *task);
-void rsu_task_fail_and_delete(rsu_task_t *task, GError *error);
+void rsu_task_complete(rsu_task_t *task);
+void rsu_task_fail(rsu_task_t *task, GError *error);
 void rsu_task_delete(rsu_task_t *task);
-void rsu_task_cancel_and_delete(rsu_task_t *task);
+void rsu_task_cancel(rsu_task_t *task);
 
 #endif

@@ -240,6 +240,12 @@ GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp)
 	return g_variant_ref_sink(g_variant_builder_end(&vb));
 }
 
+GHashTable *rsu_upnp_get_server_udn_map(rsu_upnp_t *upnp)
+{
+	return upnp->server_udn_map;
+}
+
+
 void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb)

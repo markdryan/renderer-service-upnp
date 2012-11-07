@@ -22,6 +22,7 @@ renderer_service_upnp_sources =	src/async.c			\
 				src/renderer-service-upnp.c	\
 				src/settings.c			\
 				src/task.c			\
+				src/task-processor.c		\
 				src/upnp.c
 
 renderer_service_upnp_headers =	src/async.h		\
@@ -32,6 +33,8 @@ renderer_service_upnp_headers =	src/async.h		\
 				src/prop-defs.h		\
 				src/settings.h		\
 				src/task.h		\
+				src/task-atom.h		\
+				src/task-processor.h	\
 				src/upnp.h
 
 bin_PROGRAMS = renderer-service-upnp

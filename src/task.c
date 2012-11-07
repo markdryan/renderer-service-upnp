@@ -275,7 +275,7 @@ rsu_task_t *rsu_task_remove_uri_new(GDBusMethodInvocation *invocation,
 	return task;
 }
 
-void rsu_task_complete_and_delete(rsu_task_t *task)
+void rsu_task_complete(rsu_task_t *task)
 {
 	if (!task)
 		goto finished;
@@ -291,29 +291,27 @@ void rsu_task_complete_and_delete(rsu_task_t *task)
 							      NULL);
 	}
 
-	prv_rsu_task_delete(task);
-
 finished:
 
 	return;
 }
 
-void rsu_task_fail_and_delete(rsu_task_t *task, GError *error)
+void rsu_task_fail(rsu_task_t *task, GError *error)
 {
 	if (!task)
 		goto finished;
 
-	if (task->invocation)
+	if (task->invocation) {
 		g_dbus_method_invocation_return_gerror(task->invocation, error);
-
-	prv_rsu_task_delete(task);
+		task->invocation = NULL;
+	}
 
 finished:
 
 	return;
 }
 
-void rsu_task_cancel_and_delete(rsu_task_t *task)
+void rsu_task_cancel(rsu_task_t *task)
 {
 	GError *error;
 
@@ -324,10 +322,9 @@ void rsu_task_cancel_and_delete(rsu_task_t *task)
 		error = g_error_new(RSU_ERROR, RSU_ERROR_CANCELLED,
 				    "Operation cancelled.");
 		g_dbus_method_invocation_return_gerror(task->invocation, error);
+		task->invocation = NULL;
 		g_error_free(error);
 	}
-
-	prv_rsu_task_delete(task);
 
 finished:
 

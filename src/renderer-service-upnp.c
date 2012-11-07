@@ -30,11 +30,13 @@
 #include <syslog.h>
 #include <sys/signalfd.h>
 
+#include "device.h"
 #include "error.h"
 #include "log.h"
 #include "prop-defs.h"
 #include "settings.h"
 #include "task.h"
+#include "task-processor.h"
 #include "upnp.h"
 
 #define RSU_INTERFACE_GET_VERSION "GetVersion"
@@ -84,22 +86,20 @@ struct rsu_context_t_ {
 	bool error;
 	guint rsu_id;
 	guint sig_id;
-	guint idle_id;
 	guint owner_id;
 	GDBusNodeInfo *root_node_info;
 	GDBusNodeInfo *server_node_info;
 	GMainLoop *main_loop;
 	GDBusConnection *connection;
-	gboolean quitting;
-	GPtrArray *tasks;
 	GHashTable *watchers;
-	GCancellable *cancellable;
-	rsu_task_t *current_task;
+	rsu_task_processor_t *processor;
 	rsu_upnp_t *upnp;
 	rsu_settings_context_t *settings;
 };
 
 static rsu_context_t g_context;
+
+#define RSU_SINK "renderer-service-upnp"
 
 static const gchar g_rsu_root_introspection[] =
 	"<node>"
@@ -271,7 +271,7 @@ static const gchar g_rsu_server_introspection[] =
 	"  </interface>"
 	"</node>";
 
-static gboolean prv_process_task(gpointer user_data);
+static void prv_process_task(rsu_task_atom_t *task, GCancellable **cancellable);
 
 static void prv_rsu_method_call(GDBusConnection *conn,
 				const gchar *sender,
@@ -371,134 +371,129 @@ static const GDBusInterfaceVTable *g_server_vtables[RSU_INTERFACE_INFO_MAX] = {
 	&g_device_vtable
 };
 
-static void prv_free_rsu_task_cb(gpointer data, gpointer user_data)
+static gboolean prv_context_quit_cb(gpointer user_data)
 {
-	rsu_task_delete(data);
+	RSU_LOG_DEBUG("Quitting");
+
+	g_main_loop_quit(g_context.main_loop);
+
+	return FALSE;
 }
 
 static void prv_process_sync_task(rsu_task_t *task)
 {
 	GError *error;
 
-	g_context.current_task = task;
-
 	switch (task->type) {
 	case RSU_TASK_GET_VERSION:
-		rsu_task_complete_and_delete(task);
+		rsu_task_complete(task);
+		rsu_task_queue_task_completed(task->base.queue_id);
 		break;
 	case RSU_TASK_GET_SERVERS:
 		task->result = rsu_upnp_get_server_ids(g_context.upnp);
-		rsu_task_complete_and_delete(task);
+		rsu_task_complete(task);
+		rsu_task_queue_task_completed(task->base.queue_id);
 		break;
 	case RSU_TASK_RAISE:
 	case RSU_TASK_QUIT:
 		error = g_error_new(RSU_ERROR, RSU_ERROR_NOT_SUPPORTED,
 				    "Command not supported.");
-		rsu_task_fail_and_delete(task, error);
+		rsu_task_fail(task, error);
+		rsu_task_queue_task_completed(task->base.queue_id);
 		g_error_free(error);
 		break;
 	default:
 		break;
 	}
-
-	g_context.current_task = NULL;
 }
 
 static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 				    GError *error)
 {
-	g_object_unref(g_context.cancellable);
-	g_context.cancellable = NULL;
-	g_context.current_task = NULL;
-
 	if (error) {
-		rsu_task_fail_and_delete(task, error);
+		rsu_task_fail(task, error);
 		g_error_free(error);
 	} else {
 		task->result = result;
-		rsu_task_complete_and_delete(task);
+		rsu_task_complete(task);
 	}
 
-	if (g_context.quitting)
-		g_main_loop_quit(g_context.main_loop);
-	else if (g_context.tasks->len > 0)
-		g_context.idle_id = g_idle_add(prv_process_task, NULL);
+	rsu_task_queue_task_completed(task->base.queue_id);
 }
 
-static void prv_process_async_task(rsu_task_t *task)
+static void prv_process_async_task(rsu_task_t *task, GCancellable **cancellable)
 {
-	g_context.cancellable = g_cancellable_new();
-	g_context.current_task = task;
+	*cancellable = g_cancellable_new();
 
 	switch (task->type) {
 	case RSU_TASK_GET_PROP:
 		rsu_upnp_get_prop(g_context.upnp, task,
-				  g_context.cancellable,
+				  *cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_GET_ALL_PROPS:
 		rsu_upnp_get_all_props(g_context.upnp, task,
-				       g_context.cancellable,
+				       *cancellable,
 				       prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_PROP:
 		rsu_upnp_set_prop(g_context.upnp, task,
-				  g_context.cancellable,
+				  *cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY:
 		rsu_upnp_play(g_context.upnp, task,
-			      g_context.cancellable,
+			      *cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PAUSE:
 		rsu_upnp_pause(g_context.upnp, task,
-			      g_context.cancellable,
+			      *cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY_PAUSE:
 		rsu_upnp_play_pause(g_context.upnp, task,
-				    g_context.cancellable,
+				    *cancellable,
 				    prv_async_task_complete);
 		break;
 	case RSU_TASK_STOP:
 		rsu_upnp_stop(g_context.upnp, task,
-			      g_context.cancellable,
+			      *cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_NEXT:
 		rsu_upnp_next(g_context.upnp, task,
-			      g_context.cancellable,
+			      *cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PREVIOUS:
 		rsu_upnp_previous(g_context.upnp, task,
-				  g_context.cancellable,
+				  *cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_OPEN_URI:
 		rsu_upnp_open_uri(g_context.upnp, task,
-				  g_context.cancellable,
+				  *cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_SEEK:
 		rsu_upnp_seek(g_context.upnp, task,
-			      g_context.cancellable,
+			      *cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_POSITION:
 		rsu_upnp_set_position(g_context.upnp, task,
-				      g_context.cancellable,
+				      *cancellable,
 				      prv_async_task_complete);
 		break;
 	case RSU_TASK_HOST_URI:
 		rsu_upnp_host_uri(g_context.upnp, task,
-				  g_context.cancellable,
+				  *cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_REMOVE_URI:
 		rsu_upnp_remove_uri(g_context.upnp, task,
-				    g_context.cancellable,
+				    *cancellable,
 				    prv_async_task_complete);
 		break;
 	default:
@@ -506,31 +501,30 @@ static void prv_process_async_task(rsu_task_t *task)
 	}
 }
 
-static gboolean prv_process_task(gpointer user_data)
+static void prv_process_task(rsu_task_atom_t *task, GCancellable **cancellable)
 {
-	rsu_task_t *task;
-	gboolean retval = FALSE;
+	rsu_task_t *client_task = (rsu_task_t *)task;
 
-	if (g_context.tasks->len > 0) {
-		task = g_ptr_array_index(g_context.tasks, 0);
-		if (task->synchronous) {
-			prv_process_sync_task(task);
-			retval = TRUE;
-		} else {
-			prv_process_async_task(task);
-			g_context.idle_id = 0;
-		}
-		g_ptr_array_remove_index(g_context.tasks, 0);
-	} else {
-		g_context.idle_id = 0;
-	}
+	if (client_task->synchronous)
+		prv_process_sync_task(client_task);
+	else
+		prv_process_async_task(client_task, cancellable);
+}
 
-	return retval;
+static void prv_cancel_task(rsu_task_atom_t *task)
+{
+	rsu_task_cancel((rsu_task_t *)task);
+}
+
+static void prv_delete_task(rsu_task_atom_t *task)
+{
+	rsu_task_delete((rsu_task_t *)task);
 }
 
 static void prv_rsu_context_init(void)
 {
 	memset(&g_context, 0, sizeof(g_context));
+	g_context.processor = rsu_task_processor_new(prv_context_quit_cb);
 }
 
 static void prv_rsu_context_free(void)
@@ -541,13 +535,7 @@ static void prv_rsu_context_free(void)
 	if (g_context.watchers)
 		g_hash_table_unref(g_context.watchers);
 
-	if (g_context.tasks) {
-		g_ptr_array_foreach(g_context.tasks, prv_free_rsu_task_cb, NULL);
-		g_ptr_array_unref(g_context.tasks);
-	}
-
-	if (g_context.idle_id)
-		(void) g_source_remove(g_context.idle_id);
+	rsu_task_processor_free(g_context.processor);
 
 	if (g_context.sig_id)
 		(void) g_source_remove(g_context.sig_id);
@@ -577,57 +565,16 @@ static void prv_rsu_context_free(void)
 		rsu_settings_delete(g_context.settings);
 }
 
-static void prv_quit(void)
-{
-	if (g_context.cancellable) {
-		g_cancellable_cancel(g_context.cancellable);
-		g_context.quitting = TRUE;
-	} else {
-		g_main_loop_quit(g_context.main_loop);
-	}
-}
-
 static void prv_remove_client(const gchar *name)
 {
-	const gchar *client_name;
-	rsu_task_t *task;
-	guint pos;
-
-	if (g_context.cancellable) {
-		client_name = g_dbus_method_invocation_get_sender(
-					g_context.current_task->invocation);
-		if (!strcmp(client_name, name)) {
-			RSU_LOG_DEBUG("Cancelling current task, type is %d",
-						g_context.current_task->type);
-
-			g_cancellable_cancel(g_context.cancellable);
-		}
-	}
-
-	pos = 0;
-	while (pos < g_context.tasks->len) {
-		task = (rsu_task_t *) g_ptr_array_index(g_context.tasks, pos);
-
-		client_name = g_dbus_method_invocation_get_sender(
-							task->invocation);
-
-		if (strcmp(client_name, name)) {
-			pos++;
-			continue;
-		}
-
-		RSU_LOG_DEBUG("Removing task type %d from array", task->type);
-
-		(void) g_ptr_array_remove_index(g_context.tasks, pos);
-		rsu_task_cancel_and_delete(task);
-	}
+	rsu_task_processor_remove_queues_for_source(g_context.processor, name);
 
 	rsu_upnp_lost_client(g_context.upnp, name);
-	(void) g_hash_table_remove(g_context.watchers, name);
 
+	(void) g_hash_table_remove(g_context.watchers, name);
 	if (g_hash_table_size(g_context.watchers) == 0)
 		if (!rsu_settings_is_never_quit(g_context.settings))
-			prv_quit();
+			rsu_task_processor_set_quitting(g_context.processor);
 }
 
 static void prv_lost_client(GDBusConnection *connection, const gchar *name,
@@ -636,10 +583,11 @@ static void prv_lost_client(GDBusConnection *connection, const gchar *name,
 	prv_remove_client(name);
 }
 
-static void prv_add_task(rsu_task_t *task)
+static void prv_add_task(rsu_task_t *task, const gchar *sink)
 {
 	const gchar *client_name;
 	guint watcher_id;
+	const rsu_task_queue_key_t *queue_id;
 
 	client_name = g_dbus_method_invocation_get_sender(task->invocation);
 
@@ -653,10 +601,19 @@ static void prv_add_task(rsu_task_t *task)
 				    GUINT_TO_POINTER(watcher_id));
 	}
 
-	if (!g_context.cancellable && !g_context.idle_id)
-		g_context.idle_id = g_idle_add(prv_process_task, NULL);
+	queue_id = rsu_task_processor_lookup_queue(g_context.processor,
+						   client_name, sink);
+	if (!queue_id)
+		queue_id = rsu_task_processor_add_queue(
+						g_context.processor,
+						client_name,
+						sink,
+						RSU_TASK_QUEUE_FLAG_AUTO_START,
+						prv_process_task,
+						prv_cancel_task,
+						prv_delete_task);
 
-	g_ptr_array_add(g_context.tasks, task);
+	rsu_task_queue_add_task(queue_id, &task->base);
 }
 
 static void prv_rsu_method_call(GDBusConnection *conn,
@@ -681,12 +638,36 @@ static void prv_rsu_method_call(GDBusConnection *conn,
 		else
 			goto finished;
 
-		prv_add_task(task);
+		prv_add_task(task, RSU_SINK);
 	}
 
 finished:
 
 	return;
+}
+
+static const gchar *prv_get_device_id(const gchar *object, GError **error)
+{
+	rsu_device_t *device;
+
+	device = rsu_device_from_path(object,
+				rsu_upnp_get_server_udn_map(g_context.upnp));
+
+
+	if (!device ) {
+		RSU_LOG_WARNING("Cannot locate device for %s", object);
+
+		*error = g_error_new(RSU_ERROR, RSU_ERROR_OBJECT_NOT_FOUND,
+				     "Cannot locate device corresponding to"
+				     " the specified path");
+		goto on_error;
+	}
+
+	return device->path;
+
+on_error:
+
+	return NULL;
 }
 
 static void prv_props_method_call(GDBusConnection *conn,
@@ -699,6 +680,16 @@ static void prv_props_method_call(GDBusConnection *conn,
 				  gpointer user_data)
 {
 	rsu_task_t *task;
+	const gchar *device_id;
+	GError *error = NULL;
+
+	device_id = prv_get_device_id(object, &error);
+	if (!device_id) {
+		g_dbus_method_invocation_return_gerror(invocation, error);
+		g_error_free(error);
+
+		goto finished;
+	}
 
 	if (!strcmp(method, RSU_INTERFACE_GET_ALL))
 		task = rsu_task_get_props_new(invocation, object, parameters);
@@ -709,7 +700,7 @@ static void prv_props_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	prv_add_task(task);
+	prv_add_task(task, device_id);
 
 finished:
 
@@ -727,6 +718,16 @@ static void prv_rsu_device_method_call(GDBusConnection *conn,
 
 {
 	rsu_task_t *task;
+	const gchar *device_id;
+	GError *error = NULL;
+
+	device_id = prv_get_device_id(object, &error);
+	if (!device_id) {
+		g_dbus_method_invocation_return_gerror(invocation, error);
+		g_error_free(error);
+
+		goto finished;
+	}
 
 	if (!strcmp(method, RSU_INTERFACE_RAISE))
 		task = rsu_task_raise_new(invocation);
@@ -735,7 +736,7 @@ static void prv_rsu_device_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	prv_add_task(task);
+	prv_add_task(task, device_id);
 
 finished:
 
@@ -753,6 +754,16 @@ static void prv_rsu_player_method_call(GDBusConnection *conn,
 
 {
 	rsu_task_t *task;
+	const gchar *device_id;
+	GError *error = NULL;
+
+	device_id = prv_get_device_id(object, &error);
+	if (!device_id) {
+		g_dbus_method_invocation_return_gerror(invocation, error);
+		g_error_free(error);
+
+		goto finished;
+	}
 
 	if (!strcmp(method, RSU_INTERFACE_PLAY))
 		task = rsu_task_play_new(invocation, object);
@@ -776,7 +787,7 @@ static void prv_rsu_player_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	prv_add_task(task);
+	prv_add_task(task, device_id);
 
 finished:
 
@@ -793,6 +804,16 @@ static void prv_rsu_push_host_method_call(GDBusConnection *conn,
 					  gpointer user_data)
 {
 	rsu_task_t *task;
+	const gchar *device_id;
+	GError *error = NULL;
+
+	device_id = prv_get_device_id(object, &error);
+	if (!device_id) {
+		g_dbus_method_invocation_return_gerror(invocation, error);
+		g_error_free(error);
+
+		goto on_error;
+	}
 
 	if (!strcmp(method, RSU_INTERFACE_HOST_FILE))
 		task = rsu_task_host_uri_new(invocation, object, parameters);
@@ -801,7 +822,7 @@ static void prv_rsu_push_host_method_call(GDBusConnection *conn,
 	else
 		goto on_error;
 
-	prv_add_task(task);
+	prv_add_task(task, device_id);
 
 on_error:
 
@@ -840,6 +861,8 @@ static void prv_lost_media_server(const gchar *path)
 					     RSU_INTERFACE_LOST_SERVER,
 					     g_variant_new("(s)", path),
 					     NULL);
+
+	rsu_task_processor_remove_queues_for_sink(g_context.processor, path);
 }
 
 static void prv_bus_acquired(GDBusConnection *connection, const gchar *name,
@@ -880,13 +903,13 @@ static void prv_name_lost(GDBusConnection *connection, const gchar *name,
 {
 	g_context.connection = NULL;
 
-	prv_quit();
+	rsu_task_processor_set_quitting(g_context.processor);
 }
 
 static gboolean prv_quit_handler(GIOChannel *source, GIOCondition condition,
 				 gpointer user_data)
 {
-	prv_quit();
+	rsu_task_processor_set_quitting(g_context.processor);
 	g_context.sig_id = 0;
 
 	return FALSE;
@@ -915,8 +938,8 @@ static bool prv_init_signal_handler(sigset_t mask)
 		goto on_error;
 
 	g_context.sig_id = g_io_add_watch(channel, G_IO_IN | G_IO_PRI,
-					 prv_quit_handler,
-					 NULL);
+					  prv_quit_handler,
+					  NULL);
 
 	retval = true;
 
@@ -972,8 +995,6 @@ int main(int argc, char *argv[])
 					    G_BUS_NAME_OWNER_FLAGS_NONE,
 					    prv_bus_acquired, NULL,
 					    prv_name_lost, NULL, NULL);
-
-	g_context.tasks = g_ptr_array_new();
 
 	g_context.watchers = g_hash_table_new_full(g_str_hash, g_str_equal,
 						   g_free,

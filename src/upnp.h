@@ -52,6 +52,7 @@ rsu_upnp_t *rsu_upnp_new(GDBusConnection *connection,
 			 rsu_upnp_callback_t lost_server);
 void rsu_upnp_delete(rsu_upnp_t *upnp);
 GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp);
+GHashTable *rsu_upnp_get_server_udn_map(rsu_upnp_t *upnp);
 void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb);

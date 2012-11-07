@@ -26,6 +26,9 @@
 #include <gio/gio.h>
 #include <glib.h>
 
+#include <libgupnp/gupnp-service-proxy.h>
+#include <libgupnp/gupnp-device-proxy.h>
+
 #include "host-service.h"
 #include "upnp.h"
 

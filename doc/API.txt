@@ -219,11 +219,9 @@ interface.  The main points of interest are noted below:
 
 - The Shuffle property is not implemented.
 
-- The Rate property is currently read only.  This will change in the future.
-
 - A new property, TransportPlaySpeeds has been added.  It is an array of
-  fractional numbers in string format that, represent the play speeds supported
-  by the renderer.  This property allows clients to set the Rate property with
+  doubles that corresponds to the allowed play speed values supported by the
+  renderer.  This property allows clients to set the Rate property with
   a value that will be accepted by the DMR.
 
 - The Seek signal is not implemented yet.

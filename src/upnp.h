@@ -42,73 +42,58 @@ struct rsu_interface_info_t_ {
 	const GDBusInterfaceVTable *vtable;
 };
 
-typedef void (*rsu_upnp_callback_t)(const gchar *path, void *user_data);
+typedef void (*rsu_upnp_callback_t)(const gchar *path);
 typedef void (*rsu_upnp_task_complete_t)(rsu_task_t *task, GVariant *result,
-					 GError *error, void *user_data);
+					 GError *error);
 
 rsu_upnp_t *rsu_upnp_new(GDBusConnection *connection,
 			 rsu_interface_info_t *interface_info,
 			 rsu_upnp_callback_t found_server,
-			 rsu_upnp_callback_t lost_server,
-			 void *user_data);
+			 rsu_upnp_callback_t lost_server);
 void rsu_upnp_delete(rsu_upnp_t *upnp);
 GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp);
 void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data);
+		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data);
+		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 			    GCancellable *cancellable,
-			    rsu_upnp_task_complete_t cb,
-			    void *user_data);
+			    rsu_upnp_task_complete_t cb);
 void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data);
+		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 		    GCancellable *cancellable,
-		    rsu_upnp_task_complete_t cb,
-		    void *user_data);
+		    rsu_upnp_task_complete_t cb);
 void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data);
+			 rsu_upnp_task_complete_t cb);
 void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data);
+		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data);
+		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data);
+		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data);
+		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data);
+		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 			   GCancellable *cancellable,
-			   rsu_upnp_task_complete_t cb,
-			   void *user_data);
+			   rsu_upnp_task_complete_t cb);
 void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data);
+		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data);
+			 rsu_upnp_task_complete_t cb);
 void rsu_upnp_lost_client(rsu_upnp_t *upnp, const gchar *client_name);
 
 #endif

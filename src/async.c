@@ -26,7 +26,6 @@
 
 rsu_async_cb_data_t *rsu_async_cb_data_new(rsu_task_t *task,
 					   rsu_upnp_task_complete_t cb,
-					   void *user_data,
 					   gpointer private,
 					   GDestroyNotify free_private,
 					   rsu_device_t *device)
@@ -36,7 +35,6 @@ rsu_async_cb_data_t *rsu_async_cb_data_new(rsu_task_t *task,
 	cb_data->type = task->type;
 	cb_data->task = task;
 	cb_data->cb = cb;
-	cb_data->user_data = user_data;
 	cb_data->private = private;
 	cb_data->free_private = free_private;
 	cb_data->device = device;
@@ -58,8 +56,7 @@ gboolean rsu_async_complete_task(gpointer user_data)
 	rsu_async_cb_data_t *cb_data = user_data;
 
 	cb_data->device->current_task = NULL;
-	cb_data->cb(cb_data->task, cb_data->result, cb_data->error,
-		    cb_data->user_data);
+	cb_data->cb(cb_data->task, cb_data->result, cb_data->error);
 	prv_rsu_upnp_cb_data_delete(cb_data);
 
 	return FALSE;

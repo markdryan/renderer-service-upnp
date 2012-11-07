@@ -40,7 +40,6 @@ struct rsu_upnp_t_ {
 	rsu_upnp_callback_t found_server;
 	rsu_upnp_callback_t lost_server;
 	GUPnPContextManager *context_manager;
-	void *user_data;
 	GHashTable *server_udn_map;
 	guint counter;
 	rsu_host_service_t *host_service;
@@ -71,12 +70,11 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 				   ip_address,
 				   upnp->counter,
 				   upnp->interface_info,
-				   upnp->user_data,
 				   &device)) {
 			++upnp->counter;
 			g_hash_table_insert(upnp->server_udn_map, g_strdup(udn),
 					    device);
-			upnp->found_server(device->path, upnp->user_data);
+			upnp->found_server(device->path);
 		}
 	} else {
 		for (i = 0; i < device->contexts->len; ++i) {
@@ -148,7 +146,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 				rsu_async_task_lost_object(
 					device->current_task);
 
-			upnp->lost_server(device->path, upnp->user_data);
+			upnp->lost_server(device->path);
 			g_hash_table_remove(upnp->server_udn_map, udn);
 		} else if (subscribed && !device->timeout_id) {
 			RSU_LOG_DEBUG("Subscribe on new context");
@@ -189,14 +187,12 @@ static void prv_on_context_available(GUPnPContextManager *context_manager,
 rsu_upnp_t *rsu_upnp_new(GDBusConnection *connection,
 			 rsu_interface_info_t *interface_info,
 			 rsu_upnp_callback_t found_server,
-			 rsu_upnp_callback_t lost_server,
-			 void *user_data)
+			 rsu_upnp_callback_t lost_server)
 {
 	rsu_upnp_t *upnp = g_new0(rsu_upnp_t, 1);
 
 	upnp->connection = connection;
 	upnp->interface_info = interface_info;
-	upnp->user_data = user_data;
 	upnp->found_server = found_server;
 	upnp->lost_server = lost_server;
 
@@ -246,8 +242,7 @@ GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp)
 
 void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data)
+		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -255,8 +250,7 @@ void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -264,14 +258,13 @@ void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_set_prop(device, task, cancellable, cb, user_data);
+		rsu_device_set_prop(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data)
+		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -279,8 +272,7 @@ void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -288,14 +280,13 @@ void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_get_prop(device, task, cancellable, cb, user_data);
+		rsu_device_get_prop(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 			    GCancellable *cancellable,
-			    rsu_upnp_task_complete_t cb,
-			    void *user_data)
+			    rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -303,8 +294,7 @@ void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -312,15 +302,13 @@ void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_get_all_props(device, task, cancellable, cb,
-					 user_data);
+		rsu_device_get_all_props(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data)
+		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -328,8 +316,7 @@ void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -337,15 +324,13 @@ void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_play(device, task, cancellable, cb,
-				user_data);
+		rsu_device_play(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 		    GCancellable *cancellable,
-		    rsu_upnp_task_complete_t cb,
-		    void *user_data)
+		    rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -353,8 +338,7 @@ void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -362,15 +346,13 @@ void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_pause(device, task, cancellable, cb,
-				 user_data);
+		rsu_device_pause(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -378,8 +360,7 @@ void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -387,15 +368,13 @@ void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_play_pause(device, task, cancellable, cb,
-				      user_data);
+		rsu_device_play_pause(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data)
+		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -403,8 +382,7 @@ void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -412,15 +390,13 @@ void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_stop(device, task, cancellable, cb,
-				user_data);
+		rsu_device_stop(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data)
+		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -428,8 +404,7 @@ void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -437,15 +412,13 @@ void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_next(device, task, cancellable, cb,
-				user_data);
+		rsu_device_next(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data)
+		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -453,8 +426,7 @@ void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -462,15 +434,13 @@ void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_previous(device, task, cancellable, cb,
-				    user_data);
+		rsu_device_previous(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data)
+		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -478,8 +448,7 @@ void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -487,15 +456,13 @@ void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_open_uri(device, task, cancellable, cb,
-				    user_data);
+		rsu_device_open_uri(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 		   GCancellable *cancellable,
-		   rsu_upnp_task_complete_t cb,
-		   void *user_data)
+		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -503,8 +470,7 @@ void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -512,14 +478,13 @@ void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_seek(device, task, cancellable, cb, user_data);
+		rsu_device_seek(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 			   GCancellable *cancellable,
-			   rsu_upnp_task_complete_t cb,
-			   void *user_data)
+			   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -527,8 +492,7 @@ void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -536,15 +500,13 @@ void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
-		rsu_device_set_position(device, task, cancellable, cb,
-					user_data);
+		rsu_device_set_position(device, task, cancellable, cb);
 	}
 }
 
 void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		       GCancellable *cancellable,
-		       rsu_upnp_task_complete_t cb,
-		       void *user_data)
+		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -552,8 +514,7 @@ void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -562,14 +523,13 @@ void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
 		rsu_device_host_uri(device, task, upnp->host_service,
-				    cancellable, cb, user_data);
+				    cancellable, cb);
 	}
 }
 
 void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
@@ -577,8 +537,7 @@ void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						NULL);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
 					     "Cannot locate a device"
@@ -587,7 +546,7 @@ void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
 	} else {
 		rsu_device_remove_uri(device, task, upnp->host_service,
-				      cancellable, cb, user_data);
+				      cancellable, cb);
 	}
 }
 

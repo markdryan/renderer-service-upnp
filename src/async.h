@@ -34,7 +34,6 @@ struct rsu_async_cb_data_t_ {
 	rsu_task_type_t type;
 	rsu_task_t *task;
 	rsu_upnp_task_complete_t cb;
-	void *user_data;
 	GVariant *result;
 	GError *error;
 	GUPnPServiceProxyAction *action;
@@ -48,7 +47,6 @@ struct rsu_async_cb_data_t_ {
 
 rsu_async_cb_data_t *rsu_async_cb_data_new(rsu_task_t *task,
 					   rsu_upnp_task_complete_t cb,
-					   void *user_data,
 					   gpointer private,
 					   GDestroyNotify free_private,
 					   rsu_device_t *device);

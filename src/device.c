@@ -439,7 +439,6 @@ gboolean rsu_device_new(GDBusConnection *connection,
 			const gchar *ip_address,
 			guint counter,
 			rsu_interface_info_t *interface_info,
-			void *user_data,
 			rsu_device_t **device)
 {
 	rsu_device_t *dev = g_new0(rsu_device_t, 1);
@@ -463,7 +462,7 @@ gboolean rsu_device_new(GDBusConnection *connection,
 			new_path->str,
 			interface_info[i].interface,
 			interface_info[i].vtable,
-			user_data, NULL, NULL);
+			NULL, NULL, NULL);
 
 		if (!dev->ids[i])
 			goto on_error;
@@ -1733,15 +1732,13 @@ exit:
 
 void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
 	rsu_async_cb_data_t *cb_data;
 	rsu_device_context_t *context;
 	rsu_task_set_prop_t *set_prop = &task->ut.set_prop;
 
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	if (g_strcmp0(set_prop->interface_name, RSU_INTERFACE_PLAYER) != 0 &&
 	    g_strcmp0(set_prop->interface_name, "") != 0) {
@@ -1785,8 +1782,7 @@ exit:
 
 void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_get_prop_t *get_prop = &task->ut.get_prop;
@@ -1806,14 +1802,13 @@ void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 		device_cb_data = g_new(rsu_device_data_t, 1);
 		device_cb_data->local_cb = prv_complete_get_prop;
 
-		cb_data = rsu_async_cb_data_new(task, cb, user_data,
+		cb_data = rsu_async_cb_data_new(task, cb,
 						device_cb_data, g_free,
 						device);
 
 		prv_get_position_info(cancellable, cb_data);
 	} else {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-						device);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 		if (!device->props.synced)
 			prv_props_update(device, task);
@@ -1825,8 +1820,7 @@ void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
 
 void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
 			      GCancellable *cancellable,
-			      rsu_upnp_task_complete_t cb,
-			      void *user_data)
+			      rsu_upnp_task_complete_t cb)
 {
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_get_props_t *get_props = &task->ut.get_props;
@@ -1844,14 +1838,13 @@ void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
 		device_cb_data = g_new(rsu_device_data_t, 1);
 		device_cb_data->local_cb = prv_complete_get_props;
 
-		cb_data = rsu_async_cb_data_new(task, cb, user_data,
+		cb_data = rsu_async_cb_data_new(task, cb,
 						device_cb_data, NULL,
 						device);
 
 		prv_get_position_info(cancellable, cb_data);
 	} else {
-		cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 		prv_get_props(cb_data);
 		(void) g_idle_add(rsu_async_complete_task, cb_data);
@@ -1860,15 +1853,13 @@ void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
 
 void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 		     GCancellable *cancellable,
-		     rsu_upnp_task_complete_t cb,
-		     void *user_data)
+		     rsu_upnp_task_complete_t cb)
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 
 	context = rsu_device_get_context(device);
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	cb_data->cancel_id =
 		g_cancellable_connect(cancellable,
@@ -1888,8 +1879,7 @@ void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 
 void rsu_device_play_pause(rsu_device_t *device, rsu_task_t *task,
 			   GCancellable *cancellable,
-			   rsu_upnp_task_complete_t cb,
-			   void *user_data)
+			   rsu_upnp_task_complete_t cb)
 {
 	GVariant *state;
 
@@ -1897,23 +1887,21 @@ void rsu_device_play_pause(rsu_device_t *device, rsu_task_t *task,
 				    RSU_INTERFACE_PROP_PLAYBACK_STATUS);
 
 	if (state && !strcmp(g_variant_get_string(state, NULL), "Playing"))
-		rsu_device_pause(device, task, cancellable, cb, user_data);
+		rsu_device_pause(device, task, cancellable, cb);
 	else
-		rsu_device_play(device, task, cancellable, cb, user_data);
+		rsu_device_play(device, task, cancellable, cb);
 }
 
 static void prv_simple_command(rsu_device_t *device, rsu_task_t *task,
 			       const gchar *command_name,
 			       GCancellable *cancellable,
-			       rsu_upnp_task_complete_t cb,
-			       void *user_data)
+			       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 
 	context = rsu_device_get_context(device);
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	cb_data->cancel_id =
 		g_cancellable_connect(cancellable,
@@ -1932,52 +1920,42 @@ static void prv_simple_command(rsu_device_t *device, rsu_task_t *task,
 
 void rsu_device_pause(rsu_device_t *device, rsu_task_t *task,
 		      GCancellable *cancellable,
-		      rsu_upnp_task_complete_t cb,
-		      void *user_data)
+		      rsu_upnp_task_complete_t cb)
 {
-	prv_simple_command(device, task, "Pause", cancellable,
-			   cb, user_data);
+	prv_simple_command(device, task, "Pause", cancellable, cb);
 }
 
 void rsu_device_stop(rsu_device_t *device, rsu_task_t *task,
 		     GCancellable *cancellable,
-		     rsu_upnp_task_complete_t cb,
-		     void *user_data)
+		     rsu_upnp_task_complete_t cb)
 {
-	prv_simple_command(device, task, "Stop", cancellable,
-			   cb, user_data);
+	prv_simple_command(device, task, "Stop", cancellable, cb);
 }
 
 void rsu_device_next(rsu_device_t *device, rsu_task_t *task,
 		     GCancellable *cancellable,
-		     rsu_upnp_task_complete_t cb,
-		     void *user_data)
+		     rsu_upnp_task_complete_t cb)
 {
-	prv_simple_command(device, task, "Next", cancellable,
-			   cb, user_data);
+	prv_simple_command(device, task, "Next", cancellable, cb);
 }
 
 void rsu_device_previous(rsu_device_t *device, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
-	prv_simple_command(device, task, "Previous", cancellable,
-			   cb, user_data);
+	prv_simple_command(device, task, "Previous", cancellable, cb);
 }
 
 void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_open_uri_t *open_uri_data = &task->ut.open_uri;
 
 	context = rsu_device_get_context(device);
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	cb_data->cancel_id =
 		g_cancellable_connect(cancellable,
@@ -2001,8 +1979,7 @@ void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
 static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 				    const gchar *pos_type,
 				    GCancellable *cancellable,
-				    rsu_upnp_task_complete_t cb,
-				    void *user_data)
+				    rsu_upnp_task_complete_t cb)
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
@@ -2010,8 +1987,7 @@ static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 	gchar *position;
 
 	context = rsu_device_get_context(device);
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	position = prv_int64_to_duration(seek_data->position);
 
@@ -2038,27 +2014,22 @@ static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 
 void rsu_device_seek(rsu_device_t *device, rsu_task_t *task,
 		     GCancellable *cancellable,
-		     rsu_upnp_task_complete_t cb,
-		     void *user_data)
+		     rsu_upnp_task_complete_t cb)
 {
-	prv_device_set_position(device, task,  "REL_TIME",
-				cancellable, cb, user_data);
+	prv_device_set_position(device, task,  "REL_TIME", cancellable, cb);
 }
 
 void rsu_device_set_position(rsu_device_t *device, rsu_task_t *task,
 			     GCancellable *cancellable,
-			     rsu_upnp_task_complete_t cb,
-			     void *user_data)
+			     rsu_upnp_task_complete_t cb)
 {
-	prv_device_set_position(device, task,  "ABS_TIME",
-				cancellable, cb, user_data);
+	prv_device_set_position(device, task,  "ABS_TIME", cancellable, cb);
 }
 
 void rsu_device_host_uri(rsu_device_t *device, rsu_task_t *task,
 			 rsu_host_service_t *host_service,
 			 GCancellable *cancellable,
-			 rsu_upnp_task_complete_t cb,
-			 void *user_data)
+			 rsu_upnp_task_complete_t cb)
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
@@ -2071,8 +2042,7 @@ void rsu_device_host_uri(rsu_device_t *device, rsu_task_t *task,
 				   host_uri->client, host_uri->uri,
 				   &error);
 
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 	if (url) {
 		cb_data->result = g_variant_ref_sink(g_variant_new_string(url));
 		g_free(url);
@@ -2086,16 +2056,14 @@ void rsu_device_host_uri(rsu_device_t *device, rsu_task_t *task,
 void rsu_device_remove_uri(rsu_device_t *device, rsu_task_t *task,
 			   rsu_host_service_t *host_service,
 			   GCancellable *cancellable,
-			   rsu_upnp_task_complete_t cb,
-			   void *user_data)
+			   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_host_uri_t *host_uri = &task->ut.host_uri;
 
 	context = rsu_device_get_context(device);
-	cb_data = rsu_async_cb_data_new(task, cb, user_data, NULL, NULL,
-					device);
+	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	if (!rsu_host_service_remove(host_service, context->ip_address,
 				     host_uri->client, host_uri->uri)) {

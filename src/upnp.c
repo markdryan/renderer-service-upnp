@@ -56,16 +56,24 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	rsu_device_context_t *context;
 	unsigned int i;
 
+	RSU_LOG_DEBUG("Enter");
+
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *)proxy);
+
 	if (!udn)
 		goto on_error;
 
 	ip_address = gupnp_context_get_host_ip(
 		gupnp_control_point_get_context(cp));
 
+	RSU_LOG_DEBUG("UDN %s", udn);
+	RSU_LOG_DEBUG("IP Address %s", ip_address);
+
 	device = g_hash_table_lookup(upnp->server_udn_map, udn);
 
 	if (!device) {
+		RSU_LOG_DEBUG("Device not found. Adding");
+
 		if (rsu_device_new(upnp->connection, proxy,
 				   ip_address,
 				   upnp->counter,
@@ -77,6 +85,8 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 			upnp->found_server(device->path);
 		}
 	} else {
+		RSU_LOG_DEBUG("Device Found");
+
 		for (i = 0; i < device->contexts->len; ++i) {
 			context = g_ptr_array_index(device->contexts, i);
 
@@ -84,12 +94,17 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 				break;
 		}
 
-		if (i == device->contexts->len)
+		if (i == device->contexts->len) {
+			RSU_LOG_DEBUG("Adding Context");
 			rsu_device_append_new_context(device, ip_address,
 						      proxy);
+		}
 	}
 
 on_error:
+
+	RSU_LOG_DEBUG("Exit");
+	RSU_LOG_DEBUG_NL();
 
 	return;
 }
@@ -116,16 +131,24 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	rsu_device_context_t *context;
 	gboolean subscribed;
 
+	RSU_LOG_DEBUG("Enter");
+
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *)proxy);
+
 	if (!udn)
 		goto on_error;
 
 	ip_address = gupnp_context_get_host_ip(
 		gupnp_control_point_get_context(cp));
 
+	RSU_LOG_DEBUG("UDN %s", udn);
+	RSU_LOG_DEBUG("IP Address %s", ip_address);
+
 	device = g_hash_table_lookup(upnp->server_udn_map, udn);
-	if (!device)
+	if (!device) {
+		RSU_LOG_WARNING("Device not found. Ignoring");
 		goto on_error;
+	}
 
 	for (i = 0; i < device->contexts->len; ++i) {
 		context = g_ptr_array_index(device->contexts, i);
@@ -229,6 +252,8 @@ GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp)
 	gpointer value;
 	rsu_device_t *device;
 
+	RSU_LOG_DEBUG("Enter");
+
 	g_variant_builder_init(&vb, G_VARIANT_TYPE("as"));
 	g_hash_table_iter_init(&iter, upnp->server_udn_map);
 
@@ -236,6 +261,8 @@ GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp)
 		device = value;
 		g_variant_builder_add(&vb, "s", device->path);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 
 	return g_variant_ref_sink(g_variant_builder_end(&vb));
 }
@@ -275,9 +302,17 @@ void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
 
+	RSU_LOG_DEBUG("Enter");
+
+	RSU_LOG_DEBUG("Path: %s", task->path);
+	RSU_LOG_DEBUG("Interface %s", task->ut.get_prop.interface_name);
+	RSU_LOG_DEBUG("Prop.%s", task->ut.get_prop.prop_name);
+
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
 	if (!device) {
+		RSU_LOG_WARNING("Cannot locate device");
+
 		cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, NULL);
 		cb_data->error = g_error_new(RSU_ERROR,
 					     RSU_ERROR_OBJECT_NOT_FOUND,
@@ -288,6 +323,8 @@ void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_get_prop(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -296,6 +333,11 @@ void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
+
+	RSU_LOG_DEBUG("Path: %s", task->path);
+	RSU_LOG_DEBUG("Interface %s", task->ut.get_prop.interface_name);
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -310,6 +352,8 @@ void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_get_all_props(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -318,6 +362,8 @@ void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -332,6 +378,8 @@ void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_play(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -340,6 +388,8 @@ void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -354,6 +404,8 @@ void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_pause(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -362,6 +414,8 @@ void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -376,6 +430,8 @@ void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_play_pause(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -384,6 +440,8 @@ void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -398,6 +456,8 @@ void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_stop(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -406,6 +466,8 @@ void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -420,6 +482,8 @@ void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_next(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -428,6 +492,8 @@ void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -442,6 +508,8 @@ void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_previous(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -450,6 +518,8 @@ void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -464,6 +534,8 @@ void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_open_uri(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -472,6 +544,8 @@ void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -486,6 +560,8 @@ void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_seek(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -494,6 +570,8 @@ void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -508,6 +586,8 @@ void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 	} else {
 		rsu_device_set_position(device, task, cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -516,6 +596,8 @@ void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -531,6 +613,8 @@ void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		rsu_device_host_uri(device, task, upnp->host_service,
 				    cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
@@ -539,6 +623,8 @@ void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 {
 	rsu_device_t *device;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_DEBUG("Enter");
 
 	device = rsu_device_from_path(task->path, upnp->server_udn_map);
 
@@ -554,6 +640,8 @@ void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 		rsu_device_remove_uri(device, task, upnp->host_service,
 				      cancellable, cb);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_lost_client(rsu_upnp_t *upnp, const gchar *client_name)

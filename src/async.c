@@ -23,6 +23,7 @@
 
 #include "async.h"
 #include "error.h"
+#include "log.h"
 
 rsu_async_cb_data_t *rsu_async_cb_data_new(rsu_task_t *task,
 					   rsu_upnp_task_complete_t cb,
@@ -54,6 +55,9 @@ static void prv_rsu_upnp_cb_data_delete(rsu_async_cb_data_t *cb_data)
 gboolean rsu_async_complete_task(gpointer user_data)
 {
 	rsu_async_cb_data_t *cb_data = user_data;
+
+	RSU_LOG_DEBUG("Enter. Error %p", (void *)cb_data->error);
+	RSU_LOG_DEBUG_NL();
 
 	cb_data->device->current_task = NULL;
 	cb_data->cb(cb_data->task, cb_data->result, cb_data->error);

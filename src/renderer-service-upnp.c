@@ -414,6 +414,8 @@ static void prv_process_sync_task(rsu_task_t *task)
 static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 				    GError *error)
 {
+	RSU_LOG_DEBUG("Enter");
+
 	if (error) {
 		rsu_task_fail(task, error);
 		g_error_free(error);
@@ -423,10 +425,14 @@ static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 	}
 
 	rsu_task_queue_task_completed(task->base.queue_id);
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 static void prv_process_async_task(rsu_task_t *task, GCancellable **cancellable)
 {
+	RSU_LOG_DEBUG("Enter");
+
 	*cancellable = g_cancellable_new();
 
 	switch (task->type) {
@@ -503,6 +509,8 @@ static void prv_process_async_task(rsu_task_t *task, GCancellable **cancellable)
 	default:
 		break;
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 static void prv_process_task(rsu_task_atom_t *task, GCancellable **cancellable)
@@ -585,6 +593,7 @@ static void prv_remove_client(const gchar *name)
 static void prv_lost_client(GDBusConnection *connection, const gchar *name,
 			    gpointer user_data)
 {
+	RSU_LOG_INFO("Client %s lost", name);
 	prv_remove_client(name);
 }
 
@@ -630,6 +639,8 @@ static void prv_rsu_method_call(GDBusConnection *conn,
 {
 	const gchar *client_name;
 	rsu_task_t *task;
+
+	RSU_LOG_INFO("Calling %s method", method);
 
 	if (!strcmp(method, RSU_INTERFACE_RELEASE)) {
 		client_name = g_dbus_method_invocation_get_sender(invocation);
@@ -874,6 +885,8 @@ finished:
 
 static void prv_found_media_server(const gchar *path)
 {
+	RSU_LOG_INFO("New media server %s", path);
+
 	(void) g_dbus_connection_emit_signal(g_context.connection,
 					     NULL,
 					     RSU_OBJECT,
@@ -885,6 +898,8 @@ static void prv_found_media_server(const gchar *path)
 
 static void prv_lost_media_server(const gchar *path)
 {
+	RSU_LOG_INFO("Lost %s", path);
+
 	(void) g_dbus_connection_emit_signal(g_context.connection,
 					     NULL,
 					     RSU_OBJECT,
@@ -912,9 +927,11 @@ static void prv_bus_acquired(GDBusConnection *connection, const gchar *name,
 						  NULL, NULL, NULL);
 
 	if (!g_context.rsu_id) {
+		RSU_LOG_DEBUG("Failed to acquire Bus %s", name);
 		g_context.error = true;
 		g_main_loop_quit(g_context.main_loop);
 	} else {
+		RSU_LOG_INFO("Bus %s acquiered", name);
 		info = g_new0(rsu_interface_info_t, RSU_INTERFACE_INFO_MAX);
 
 		for (i = 0; i < RSU_INTERFACE_INFO_MAX; ++i) {
@@ -932,6 +949,8 @@ static void prv_bus_acquired(GDBusConnection *connection, const gchar *name,
 static void prv_name_lost(GDBusConnection *connection, const gchar *name,
 			  gpointer user_data)
 {
+	RSU_LOG_INFO("Lost Bus %s", name);
+
 	g_context.connection = NULL;
 
 	rsu_task_processor_set_quitting(g_context.processor);

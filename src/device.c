@@ -457,6 +457,8 @@ gboolean rsu_device_new(GDBusConnection *connection,
 	GString *new_path;
 	unsigned int i;
 
+	RSU_LOG_DEBUG("Enter");
+
 	prv_props_init(&dev->props);
 	dev->connection = connection;
 	dev->contexts = g_ptr_array_new_with_free_func(prv_rsu_context_delete);
@@ -467,6 +469,8 @@ gboolean rsu_device_new(GDBusConnection *connection,
 
 	new_path = g_string_new("");
 	g_string_printf(new_path, "%s/%u", RSU_SERVER_PATH, counter);
+
+	RSU_LOG_DEBUG("Server Path %s", new_path->str);
 
 	for (i = 0; i < RSU_INTERFACE_INFO_MAX; ++i) {
 		dev->ids[i] = g_dbus_connection_register_object(
@@ -485,6 +489,9 @@ gboolean rsu_device_new(GDBusConnection *connection,
 	dev->rate = g_strdup("1");
 
 	*device = dev;
+
+	RSU_LOG_DEBUG("Exit with SUCCESS");
+
 	return TRUE;
 
 on_error:
@@ -492,6 +499,8 @@ on_error:
 	g_string_free(new_path, TRUE);
 
 	rsu_device_delete(dev);
+
+	RSU_LOG_DEBUG("Exit with FAIL");
 
 	return FALSE;
 }
@@ -541,6 +550,8 @@ static void prv_get_prop(rsu_async_cb_data_t *cb_data)
 	rsu_task_get_prop_t *get_prop = &cb_data->task->ut.get_prop;
 	GVariant *res = NULL;
 
+	RSU_LOG_DEBUG("Enter");
+
 	if (!strcmp(get_prop->interface_name, RSU_INTERFACE_RENDERER_DEVICE)) {
 		res = g_hash_table_lookup(cb_data->device->props.device_props,
 					  get_prop->prop_name);
@@ -577,6 +588,8 @@ static void prv_get_prop(rsu_async_cb_data_t *cb_data)
 	} else {
 		cb_data->result = g_variant_ref(res);
 	}
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 static void prv_add_props(GHashTable *props, GVariantBuilder *vb)
@@ -596,6 +609,8 @@ static void prv_get_props(rsu_async_cb_data_t *cb_data)
 {
 	rsu_task_get_props_t *get_props = &cb_data->task->ut.get_props;
 	GVariantBuilder *vb;
+
+	RSU_LOG_DEBUG("Enter");
 
 	vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
@@ -622,6 +637,8 @@ static void prv_get_props(rsu_async_cb_data_t *cb_data)
 on_error:
 
 	g_variant_builder_unref(vb);
+
+	RSU_LOG_DEBUG("Exit");
 }
 
 static const gchar *prv_map_transport_state(const gchar *upnp_state)
@@ -1660,6 +1677,9 @@ static void prv_set_volume(rsu_async_cb_data_t *cb_data, GVariant *params)
 
 	volume = g_variant_get_double(params) * cb_data->device->max_volume;
 
+	RSU_LOG_INFO("Set device volume to %d/%d", (guint)volume,
+		     cb_data->device->max_volume);
+
 	cb_data->action =
 		gupnp_service_proxy_begin_action(cb_data->proxy, "SetVolume",
 						 prv_simple_call_cb, cb_data,
@@ -1745,6 +1765,8 @@ static void prv_set_rate(GVariant *params, rsu_async_cb_data_t *cb_data)
 
 	g_free(cb_data->device->rate);
 	cb_data->device->rate = g_strdup(rate);
+
+	RSU_LOG_INFO("Set device rate to %s", cb_data->device->rate);
 
 	prv_change_props(cb_data->device->props.player_props,
 			 RSU_INTERFACE_PROP_RATE, val, NULL);
@@ -1882,6 +1904,8 @@ void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
 
+	RSU_LOG_INFO("Play at speed %s", device->rate);
+
 	context = rsu_device_get_context(device);
 	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
@@ -1923,6 +1947,8 @@ static void prv_simple_command(rsu_device_t *device, rsu_task_t *task,
 {
 	rsu_device_context_t *context;
 	rsu_async_cb_data_t *cb_data;
+
+	RSU_LOG_INFO("%s", command_name);
 
 	context = rsu_device_get_context(device);
 	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
@@ -1978,6 +2004,8 @@ void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
 	rsu_async_cb_data_t *cb_data;
 	rsu_task_open_uri_t *open_uri_data = &task->ut.open_uri;
 
+	RSU_LOG_INFO("URI: %s", open_uri_data->uri);
+
 	context = rsu_device_get_context(device);
 	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
@@ -2014,6 +2042,8 @@ static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 	cb_data = rsu_async_cb_data_new(task, cb, NULL, NULL, device);
 
 	position = prv_int64_to_duration(seek_data->position);
+
+	RSU_LOG_INFO("set %s position : %s", pos_type, position);
 
 	cb_data->cancel_id =
 		g_cancellable_connect(cancellable,

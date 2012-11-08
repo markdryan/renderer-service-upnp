@@ -144,7 +144,7 @@ static rsu_host_file_t *prv_host_server_find_file(rsu_host_server_t *hs,
 	g_hash_table_iter_init(&iter, hs->files);
 
 	while (g_hash_table_iter_next(&iter, &key, &value)) {
-		if (!strcmp(((rsu_host_file_t *) value)->path, url)) {
+		if (!strcmp(((rsu_host_file_t *)value)->path, url)) {
 			retval = value;
 			*file_name = key;
 			break;

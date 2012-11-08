@@ -452,8 +452,8 @@ static void prv_process_async_task(rsu_task_t *task, GCancellable **cancellable)
 		break;
 	case RSU_TASK_PAUSE:
 		rsu_upnp_pause(g_context.upnp, task,
-			      *cancellable,
-			      prv_async_task_complete);
+			       *cancellable,
+			       prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY_PAUSE:
 		rsu_upnp_play_pause(g_context.upnp, task,
@@ -546,8 +546,9 @@ static void prv_rsu_context_free(void)
 
 	if (g_context.connection) {
 		if (g_context.rsu_id)
-			g_dbus_connection_unregister_object(g_context.connection,
-							    g_context.rsu_id);
+			g_dbus_connection_unregister_object(
+							g_context.connection,
+							g_context.rsu_id);
 	}
 
 	if (g_context.main_loop)
@@ -658,7 +659,7 @@ static const gchar *prv_get_device_id(const gchar *object, GError **error)
 				rsu_upnp_get_server_udn_map(g_context.upnp));
 
 
-	if (!device ) {
+	if (!device) {
 		RSU_LOG_WARNING("Cannot locate device for %s", object);
 
 		*error = g_error_new(RSU_ERROR, RSU_ERROR_OBJECT_NOT_FOUND,
@@ -843,7 +844,7 @@ static void prv_renderer_device_method_call(GDBusConnection *conn,
 					    gpointer user_data)
 {
 	const gchar *device_id = NULL;
-	GError* error = NULL;
+	GError *error = NULL;
 	const gchar *client_name;
 	const rsu_task_queue_key_t *queue_id;
 

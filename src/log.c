@@ -154,9 +154,10 @@ void rsu_log_init(const char *program)
 					prv_rsu_log_handler,
 					&s_log_context);
 
-	if (s_log_context.log_type != RSU_LOG_TYPE_SYSLOG) {
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_INFO
+	if (s_log_context.log_type != RSU_LOG_TYPE_SYSLOG)
 		RSU_LOG_INFO("Renderer Service UPnP version %s", VERSION);
-	}
+#endif
 }
 
 void rsu_log_finalize(void)
@@ -164,9 +165,11 @@ void rsu_log_finalize(void)
 	(void) setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Renderer Service UPnP: Exit");
 
-	if (s_log_context.log_type != RSU_LOG_TYPE_SYSLOG) {
+#if RSU_LOG_LEVEL & RSU_LOG_LEVEL_INFO
+	if (s_log_context.log_type != RSU_LOG_TYPE_SYSLOG)
 		RSU_LOG_INFO("Renderer Service UPnP: Exit");
-	}
+#endif
+
 
 	(void) g_log_set_default_handler(s_log_context.old_handler, NULL);
 

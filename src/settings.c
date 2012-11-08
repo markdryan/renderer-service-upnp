@@ -53,16 +53,16 @@ struct rsu_settings_context_t_ {
 
 #define RSU_SETTINGS_LOG_KEYS(sys, loc, settings) \
 do { \
-       RSU_LOG_DEBUG_NL(); \
-       RSU_LOG_INFO("Load file [%s]", loc ? loc : sys); \
-       RSU_LOG_DEBUG_NL(); \
-       RSU_LOG_DEBUG("[General settings]"); \
-       RSU_LOG_DEBUG("Never Quit: %s", (settings)->never_quit ? "T" : "F"); \
-       RSU_LOG_DEBUG_NL(); \
-       RSU_LOG_DEBUG("[Logging settings]"); \
-       RSU_LOG_DEBUG("Log Type : %d", (settings)->log_type); \
-       RSU_LOG_DEBUG("Log Level: 0x%02X", (settings)->log_level); \
-       RSU_LOG_DEBUG_NL(); \
+	RSU_LOG_DEBUG_NL(); \
+	RSU_LOG_INFO("Load file [%s]", loc ? loc : sys); \
+	RSU_LOG_DEBUG_NL(); \
+	RSU_LOG_DEBUG("[General settings]"); \
+	RSU_LOG_DEBUG("Never Quit: %s", (settings)->never_quit ? "T" : "F"); \
+	RSU_LOG_DEBUG_NL(); \
+	RSU_LOG_DEBUG("[Logging settings]"); \
+	RSU_LOG_DEBUG("Log Type : %d", (settings)->log_type); \
+	RSU_LOG_DEBUG("Log Level: 0x%02X", (settings)->log_level); \
+	RSU_LOG_DEBUG_NL(); \
 } while (0)
 
 
@@ -130,7 +130,7 @@ static GKeyFile *prv_rsu_settings_load_keyfile(const gchar *filepath)
 	keyfile = g_key_file_new();
 
 	if (!g_key_file_load_from_file(keyfile, filepath, G_KEY_FILE_NONE,
-					NULL)) {
+				       NULL)) {
 		g_key_file_free(keyfile);
 		keyfile = NULL;
 	}
@@ -157,9 +157,9 @@ static int prv_rsu_settings_to_log_level(gint *int_list, gsize length)
 	for (i = 0; i < length; ++i) {
 		level = int_list[i];
 
-		if (level > 0 && level < 7)
+		if (level > 0 && level < 7) {
 			log_level_value |= log_level_array[level];
-		else if ((level == 0) || (level == 7) || (level == 8)) {
+		} else if ((level == 0) || (level == 7) || (level == 8)) {
 			log_level_value = log_level_array[level];
 			break;
 		}
@@ -198,9 +198,9 @@ static void prv_rsu_settings_read_keys(rsu_settings_context_t *settings)
 						RSU_SETTINGS_KEY_NEVER_QUIT,
 						&error);
 
-	if (error == NULL)
+	if (error == NULL) {
 		settings->never_quit = b_val;
-	else {
+	} else {
 		g_error_free(error);
 		error = NULL;
 	}
@@ -209,9 +209,9 @@ static void prv_rsu_settings_read_keys(rsu_settings_context_t *settings)
 						  RSU_SETTINGS_KEY_LOG_TYPE,
 						  &error);
 
-	if (error == NULL)
+	if (error == NULL) {
 		settings->log_type = prv_rsu_settings_to_log_type(int_val);
-	else {
+	} else {
 		g_error_free(error);
 		error = NULL;
 	}
@@ -287,7 +287,7 @@ static void prv_rsu_settings_reload(rsu_settings_context_t *settings)
 
 static gboolean prv_rsu_settings_monitor_timout_cb(gpointer user_data)
 {
-	rsu_settings_context_t *data = (rsu_settings_context_t *) user_data;
+	rsu_settings_context_t *data = (rsu_settings_context_t *)user_data;
 
 	RSU_LOG_INFO("Change in local settings file: Reload");
 
@@ -303,7 +303,7 @@ static void prv_rsu_settings_monitor_keyfile_cb(GFileMonitor *monitor,
 						GFileMonitorEvent event_type,
 						gpointer user_data)
 {
-	rsu_settings_context_t *data = (rsu_settings_context_t *) user_data;
+	rsu_settings_context_t *data = (rsu_settings_context_t *)user_data;
 
 	switch (event_type) {
 	case G_FILE_MONITOR_EVENT_CHANGED:
@@ -366,9 +366,8 @@ void rsu_settings_new(rsu_settings_context_t **settings)
 		prv_rsu_settings_monitor_local_keyfile(*settings, loc_path);
 	}
 
-	if (sys_path || loc_path) {
+	if (sys_path || loc_path)
 		prv_rsu_settings_keyfile_init(*settings, sys_path, loc_path);
-	}
 
 	RSU_SETTINGS_LOG_KEYS(sys_path, loc_path, *settings);
 

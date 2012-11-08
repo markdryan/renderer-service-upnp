@@ -244,13 +244,13 @@ static void prv_context_new(const gchar *ip_address,
 	g_object_ref(proxy);
 
 	service_proxies->cm_proxy = (GUPnPServiceProxy *)
-		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
+		gupnp_device_info_get_service((GUPnPDeviceInfo *)proxy,
 					      cm_type);
 	service_proxies->av_proxy = (GUPnPServiceProxy *)
-		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
+		gupnp_device_info_get_service((GUPnPDeviceInfo *)proxy,
 					      av_type);
 	service_proxies->rc_proxy = (GUPnPServiceProxy *)
-		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
+		gupnp_device_info_get_service((GUPnPDeviceInfo *)proxy,
 					      rc_type);
 
 	*context = ctx;
@@ -308,7 +308,7 @@ static void prv_cm_subscription_lost_cb(GUPnPServiceProxy *proxy,
 
 	if (!context->timeout_id_cm) {
 		gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy,
-									TRUE);
+						   TRUE);
 		context->timeout_id_cm = g_timeout_add_seconds(10,
 						prv_re_enable_cm_subscription,
 						context);
@@ -341,7 +341,7 @@ static void prv_av_subscription_lost_cb(GUPnPServiceProxy *proxy,
 
 	if (!context->timeout_id_av) {
 		gupnp_service_proxy_set_subscribed(service_proxies->av_proxy,
-									TRUE);
+						   TRUE);
 		context->timeout_id_av = g_timeout_add_seconds(10,
 						prv_re_enable_av_subscription,
 						context);
@@ -374,7 +374,7 @@ static void prv_rc_subscription_lost_cb(GUPnPServiceProxy *proxy,
 
 	if (!context->timeout_id_rc) {
 		gupnp_service_proxy_set_subscribed(service_proxies->rc_proxy,
-									TRUE);
+						   TRUE);
 		context->timeout_id_rc = g_timeout_add_seconds(10,
 						prv_re_enable_rc_subscription,
 						context);
@@ -405,9 +405,9 @@ void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 	context->subscribed_cm = TRUE;
 
 	g_signal_connect(service_proxies->cm_proxy,
-				"subscription-lost",
-				G_CALLBACK(prv_cm_subscription_lost_cb),
-				context);
+			 "subscription-lost",
+			 G_CALLBACK(prv_cm_subscription_lost_cb),
+			 context);
 
 	gupnp_service_proxy_set_subscribed(service_proxies->av_proxy, TRUE);
 	(void) gupnp_service_proxy_add_notify(service_proxies->av_proxy,
@@ -417,9 +417,9 @@ void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 	context->subscribed_av = TRUE;
 
 	g_signal_connect(service_proxies->av_proxy,
-				"subscription-lost",
-				G_CALLBACK(prv_av_subscription_lost_cb),
-				context);
+			 "subscription-lost",
+			 G_CALLBACK(prv_av_subscription_lost_cb),
+			 context);
 
 	gupnp_service_proxy_set_subscribed(service_proxies->rc_proxy, TRUE);
 	(void) gupnp_service_proxy_add_notify(service_proxies->rc_proxy,
@@ -429,9 +429,9 @@ void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 	context->subscribed_rc = TRUE;
 
 	g_signal_connect(service_proxies->av_proxy,
-				"subscription-lost",
-				G_CALLBACK(prv_rc_subscription_lost_cb),
-				context);
+			 "subscription-lost",
+			 G_CALLBACK(prv_rc_subscription_lost_cb),
+			 context);
 }
 
 gboolean rsu_device_new(GDBusConnection *connection,
@@ -576,8 +576,8 @@ static void prv_add_props(GHashTable *props, GVariantBuilder *vb)
 	g_hash_table_iter_init(&iter, props);
 
 	while (g_hash_table_iter_next(&iter, &key, &value))
-		g_variant_builder_add(vb, "{sv}", (gchar *) key,
-				      (GVariant *) value);
+		g_variant_builder_add(vb, "{sv}", (gchar *)key,
+				      (GVariant *)value);
 }
 
 static void prv_get_props(rsu_async_cb_data_t *cb_data)
@@ -1141,7 +1141,7 @@ static void prv_as_prop_from_hash_table(const gchar *prop_name,
 		g_variant_builder_add(&vb, "s", key);
 
 	val = g_variant_ref_sink(g_variant_builder_end(&vb));
-	g_hash_table_insert(props, (gchar *) prop_name, val);
+	g_hash_table_insert(props, (gchar *)prop_name, val);
 }
 
 static void prv_process_protocol_info(rsu_device_t *device,
@@ -1426,8 +1426,9 @@ static void prv_get_services_states_values(GUPnPDeviceInfo *info,
 		introspection =	gupnp_service_info_get_introspection(sinfo,
 								     &error);
 		if (error != NULL) {
-			RSU_LOG_DEBUG("failed to fetch introspection file "
-				      "for %s", service_type);
+			RSU_LOG_DEBUG(
+				"failed to fetch introspection file for %s",
+				service_type);
 			g_error_free(error);
 			g_object_unref(service->data);
 			continue;
@@ -1547,7 +1548,7 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 			    RSU_INTERFACE_PROP_HAS_TRACK_LIST,
 			    g_variant_ref(val));
 
-	info = (GUPnPDeviceInfo *) context->device_proxy;
+	info = (GUPnPDeviceInfo *)context->device_proxy;
 
 	prv_update_device_props(info, props->device_props);
 

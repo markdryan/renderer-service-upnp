@@ -56,7 +56,7 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	rsu_device_context_t *context;
 	unsigned int i;
 
-	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
+	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *)proxy);
 	if (!udn)
 		goto on_error;
 
@@ -116,7 +116,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	rsu_device_context_t *context;
 	gboolean subscribed;
 
-	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
+	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *)proxy);
 	if (!udn)
 		goto on_error;
 

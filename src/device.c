@@ -397,41 +397,53 @@ void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 	context = rsu_device_get_context(device);
 	service_proxies = &context->service_proxies;
 
-	gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy, TRUE);
-	(void) gupnp_service_proxy_add_notify(service_proxies->cm_proxy,
-					      "SinkProtocolInfo", G_TYPE_STRING,
-					      prv_sink_change_cb,
-					      device);
-	context->subscribed_cm = TRUE;
+	if (service_proxies->cm_proxy) {
+		gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy,
+						   TRUE);
+		(void) gupnp_service_proxy_add_notify(service_proxies->cm_proxy,
+						      "SinkProtocolInfo",
+						      G_TYPE_STRING,
+						      prv_sink_change_cb,
+						      device);
+		context->subscribed_cm = TRUE;
 
-	g_signal_connect(service_proxies->cm_proxy,
-			 "subscription-lost",
-			 G_CALLBACK(prv_cm_subscription_lost_cb),
-			 context);
+		g_signal_connect(service_proxies->cm_proxy,
+				 "subscription-lost",
+				 G_CALLBACK(prv_cm_subscription_lost_cb),
+				 context);
+	}
 
-	gupnp_service_proxy_set_subscribed(service_proxies->av_proxy, TRUE);
-	(void) gupnp_service_proxy_add_notify(service_proxies->av_proxy,
-					      "LastChange", G_TYPE_STRING,
-					      prv_last_change_cb,
-					      device);
-	context->subscribed_av = TRUE;
+	if (service_proxies->av_proxy) {
+		gupnp_service_proxy_set_subscribed(service_proxies->av_proxy,
+						   TRUE);
+		(void) gupnp_service_proxy_add_notify(service_proxies->av_proxy,
+						      "LastChange",
+						      G_TYPE_STRING,
+						      prv_last_change_cb,
+						      device);
+		context->subscribed_av = TRUE;
 
-	g_signal_connect(service_proxies->av_proxy,
-			 "subscription-lost",
-			 G_CALLBACK(prv_av_subscription_lost_cb),
-			 context);
+		g_signal_connect(service_proxies->av_proxy,
+				 "subscription-lost",
+				 G_CALLBACK(prv_av_subscription_lost_cb),
+				 context);
+	}
 
-	gupnp_service_proxy_set_subscribed(service_proxies->rc_proxy, TRUE);
-	(void) gupnp_service_proxy_add_notify(service_proxies->rc_proxy,
-					      "LastChange", G_TYPE_STRING,
-					      prv_rc_last_change_cb,
-					      device);
-	context->subscribed_rc = TRUE;
+	if (service_proxies->rc_proxy) {
+		gupnp_service_proxy_set_subscribed(service_proxies->rc_proxy,
+						   TRUE);
+		(void) gupnp_service_proxy_add_notify(service_proxies->rc_proxy,
+						      "LastChange",
+						      G_TYPE_STRING,
+						      prv_rc_last_change_cb,
+						      device);
+		context->subscribed_rc = TRUE;
 
-	g_signal_connect(service_proxies->av_proxy,
-			 "subscription-lost",
-			 G_CALLBACK(prv_rc_subscription_lost_cb),
-			 context);
+		g_signal_connect(service_proxies->av_proxy,
+				 "subscription-lost",
+				 G_CALLBACK(prv_rc_subscription_lost_cb),
+				 context);
+	}
 }
 
 gboolean rsu_device_new(GDBusConnection *connection,
@@ -1394,67 +1406,69 @@ exit:
 	return;
 }
 
-static void prv_get_services_states_values(GUPnPDeviceInfo *info,
-					   GVariant **mpris_tp_speeds,
-					   GPtrArray **upnp_tp_speeds,
-					   guint *max_volume,
-					   double *min_rate, double *max_rate)
+static void prv_get_av_service_states_values(GUPnPServiceProxy *av_proxy,
+					     GVariant **mpris_tp_speeds,
+					     GPtrArray **upnp_tp_speeds,
+					     double *min_rate,
+					     double *max_rate)
 {
 	const GUPnPServiceStateVariableInfo *svi;
-	GList *services;
-	GList *service;
-	GError *error;
-	GUPnPServiceInfo *sinfo;
 	GUPnPServiceIntrospection *introspection;
-	const char *service_type;
+	GError *error = NULL;
 
-	services = gupnp_device_info_list_services(info);
-	if (services == NULL)
+	introspection =	gupnp_service_info_get_introspection(
+						GUPNP_SERVICE_INFO(av_proxy),
+						&error);
+	if (error != NULL) {
+		RSU_LOG_DEBUG("failed to fetch AV service introspection file");
+
+		g_error_free(error);
+
 		goto exit;
-
-	for (service = services; service != NULL; service = service->next) {
-		sinfo = GUPNP_SERVICE_INFO(service->data);
-		service_type = gupnp_service_info_get_service_type(sinfo);
-
-		if (!g_strrstr(service_type, ":service:AVTransport:") &&
-		    !g_strrstr(service_type, ":service:RenderingControl:")) {
-			g_object_unref(service->data);
-			continue;
-		}
-
-		error = NULL;
-		introspection =	gupnp_service_info_get_introspection(sinfo,
-								     &error);
-		if (error != NULL) {
-			RSU_LOG_DEBUG(
-				"failed to fetch introspection file for %s",
-				service_type);
-			g_error_free(error);
-			g_object_unref(service->data);
-			continue;
-		}
-
-		if (g_strrstr(service_type, ":service:AVTransport:")) {
-			svi = gupnp_service_introspection_get_state_variable(
-				introspection, "TransportPlaySpeed");
-
-			prv_get_rates_values(svi,
-					     mpris_tp_speeds, upnp_tp_speeds,
-					     min_rate, max_rate);
-		} else {
-			svi = gupnp_service_introspection_get_state_variable(
-				introspection, "Volume");
-			if (svi != NULL)
-				*max_volume = g_value_get_uint(&svi->maximum);
-		}
-
-		g_object_unref(service->data);
-		g_object_unref(introspection);
 	}
 
-	g_list_free(services);
+	svi = gupnp_service_introspection_get_state_variable(
+							introspection,
+							"TransportPlaySpeed");
+
+	prv_get_rates_values(svi,
+			     mpris_tp_speeds, upnp_tp_speeds,
+			     min_rate, max_rate);
+
+	g_object_unref(introspection);
 
 exit:
+
+	return;
+}
+
+static void prv_get_rc_service_states_values(GUPnPServiceProxy *rc_proxy,
+					     guint *max_volume)
+{
+	const GUPnPServiceStateVariableInfo *svi;
+	GUPnPServiceIntrospection *introspection;
+	GError *error = NULL;
+
+	introspection =	gupnp_service_info_get_introspection(
+						GUPNP_SERVICE_INFO(rc_proxy),
+						&error);
+	if (error != NULL) {
+		RSU_LOG_DEBUG("failed to fetch RC service introspection file");
+
+		g_error_free(error);
+
+		goto exit;
+	}
+
+	svi = gupnp_service_introspection_get_state_variable(introspection,
+							     "Volume");
+	if (svi != NULL)
+		*max_volume = g_value_get_uint(&svi->maximum);
+
+	g_object_unref(introspection);
+
+exit:
+
 	return;
 }
 
@@ -1524,6 +1538,7 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 	GVariant *val;
 	GUPnPDeviceInfo *info;
 	rsu_device_context_t *context;
+	rsu_service_proxies_t *service_proxies;
 	rsu_props_t *props = &device->props;
 	GVariantBuilder *changed_props_vb;
 	GVariant *changed_props;
@@ -1559,10 +1574,18 @@ static void prv_props_update(rsu_device_t *device, rsu_task_t *task)
 
 	changed_props_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
-	prv_get_services_states_values(info, &mpris_transport_play_speeds,
-				       &device->transport_play_speeds,
-				       &device->max_volume,
-				       &min_rate, &max_rate);
+	service_proxies = &context->service_proxies;
+
+	if (service_proxies->av_proxy)
+		prv_get_av_service_states_values(service_proxies->av_proxy,
+						 &mpris_transport_play_speeds,
+						 &device->transport_play_speeds,
+						 &min_rate,
+						 &max_rate);
+
+	if (service_proxies->rc_proxy)
+		prv_get_rc_service_states_values(service_proxies->rc_proxy,
+						 &device->max_volume);
 
 	if (min_rate != 0) {
 		val = g_variant_ref_sink(g_variant_new_double(min_rate));

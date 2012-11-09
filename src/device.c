@@ -92,36 +92,47 @@ static void prv_service_proxies_free(rsu_service_proxies_t *service_proxies)
 		g_object_unref(service_proxies->cm_proxy);
 }
 
+static void prv_rsu_context_unsubscribe(rsu_device_context_t *ctx)
+{
+	if (ctx->timeout_id_cm) {
+		(void) g_source_remove(ctx->timeout_id_cm);
+		ctx->timeout_id_cm = 0;
+	}
+	if (ctx->timeout_id_av) {
+		(void) g_source_remove(ctx->timeout_id_av);
+		ctx->timeout_id_av = 0;
+	}
+	if (ctx->timeout_id_rc) {
+		(void) g_source_remove(ctx->timeout_id_rc);
+		ctx->timeout_id_rc = 0;
+	}
+
+	if (ctx->subscribed_cm) {
+		(void) gupnp_service_proxy_remove_notify(
+			ctx->service_proxies.cm_proxy, "SinkProtocolInfo",
+			prv_sink_change_cb, ctx->device);
+		ctx->subscribed_cm = FALSE;
+	}
+	if (ctx->subscribed_av) {
+		(void) gupnp_service_proxy_remove_notify(
+			ctx->service_proxies.av_proxy, "LastChange",
+			prv_last_change_cb, ctx->device);
+		ctx->subscribed_av = FALSE;
+	}
+	if (ctx->subscribed_rc) {
+		(void) gupnp_service_proxy_remove_notify(
+			ctx->service_proxies.rc_proxy, "LastChange",
+			prv_rc_last_change_cb, ctx->device);
+		ctx->subscribed_rc = FALSE;
+	}
+}
+
 static void prv_rsu_context_delete(gpointer context)
 {
 	rsu_device_context_t *ctx = context;
-	rsu_service_proxies_t *service_proxies;
 
 	if (ctx) {
-		service_proxies = &ctx->service_proxies;
-
-		if (ctx->timeout_id_cm)
-			(void) g_source_remove(ctx->timeout_id_cm);
-		if (ctx->timeout_id_av)
-			(void) g_source_remove(ctx->timeout_id_av);
-		if (ctx->timeout_id_rc)
-			(void) g_source_remove(ctx->timeout_id_rc);
-
-		if (ctx->subscribed_cm) {
-			(void) gupnp_service_proxy_remove_notify(
-				service_proxies->cm_proxy, "SinkProtocolInfo",
-				prv_sink_change_cb, ctx->device);
-		}
-		if (ctx->subscribed_av) {
-			(void) gupnp_service_proxy_remove_notify(
-				service_proxies->av_proxy, "LastChange",
-				prv_last_change_cb, ctx->device);
-		}
-		if (ctx->subscribed_rc) {
-			(void) gupnp_service_proxy_remove_notify(
-				service_proxies->rc_proxy, "LastChange",
-				prv_rc_last_change_cb, ctx->device);
-		}
+		prv_rsu_context_unsubscribe(ctx);
 
 		g_free(ctx->ip_address);
 		if (ctx->device_proxy)
@@ -256,14 +267,50 @@ static void prv_context_new(const gchar *ip_address,
 	*context = ctx;
 }
 
+static rsu_device_context_t *prv_device_get_subscribed_context(
+						const rsu_device_t *device)
+{
+	rsu_device_context_t *context;
+	unsigned int i;
+
+	for (i = 0; i < device->contexts->len; ++i) {
+		context = g_ptr_array_index(device->contexts, i);
+		if (context->subscribed_av || context->subscribed_cm ||
+		    context->subscribed_rc)
+			goto on_found;
+	}
+
+	return NULL;
+
+on_found:
+
+	return context;
+}
+
 void rsu_device_append_new_context(rsu_device_t *device,
 				   const gchar *ip_address,
 				   GUPnPDeviceProxy *proxy)
 {
-	rsu_device_context_t *context;
+	rsu_device_context_t *new_context;
+	rsu_device_context_t *subscribed_context;
+	rsu_device_context_t *preferred_context;
 
-	prv_context_new(ip_address, proxy, device, &context);
-	g_ptr_array_add(device->contexts, context);
+	prv_context_new(ip_address, proxy, device, &new_context);
+	g_ptr_array_add(device->contexts, new_context);
+
+	subscribed_context = prv_device_get_subscribed_context(device);
+	preferred_context = rsu_device_get_context(device);
+
+	if (subscribed_context != preferred_context) {
+		if (subscribed_context) {
+			RSU_LOG_DEBUG("Subscription switch from <%s> to <%s>",
+				      subscribed_context->ip_address,
+				      preferred_context->ip_address);
+			prv_rsu_context_unsubscribe(subscribed_context);
+		}
+		rsu_device_subscribe_to_service_changes(device);
+	}
+
 }
 
 void rsu_device_delete(void *device)
@@ -397,6 +444,8 @@ void rsu_device_subscribe_to_service_changes(rsu_device_t *device)
 	context = rsu_device_get_context(device);
 	service_proxies = &context->service_proxies;
 
+	RSU_LOG_DEBUG("Subscribing through context <%s>", context->ip_address);
+
 	if (service_proxies->cm_proxy) {
 		gupnp_service_proxy_set_subscribed(service_proxies->cm_proxy,
 						   TRUE);
@@ -465,8 +514,6 @@ gboolean rsu_device_new(GDBusConnection *connection,
 
 	rsu_device_append_new_context(dev, ip_address, proxy);
 
-	rsu_device_subscribe_to_service_changes(dev);
-
 	new_path = g_string_new("");
 	g_string_printf(new_path, "%s/%u", RSU_SERVER_PATH, counter);
 
@@ -485,6 +532,8 @@ gboolean rsu_device_new(GDBusConnection *connection,
 	}
 
 	dev->path = g_string_free(new_path, FALSE);
+
+	RSU_LOG_DEBUG("Device path <%s>", dev->path);
 
 	dev->rate = g_strdup("1");
 

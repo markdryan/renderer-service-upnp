@@ -206,7 +206,7 @@ static const gchar g_rsu_server_introspection[] =
 	"    <property type='s' name='"RSU_INTERFACE_PROP_PLAYBACK_STATUS"'"
 	"       access='read'/>"
 	"    <property type='d' name='"RSU_INTERFACE_PROP_RATE"'"
-	"       access='read'/>"
+	"       access='readwrite'/>"
 	"    <property type='d' name='"RSU_INTERFACE_PROP_MINIMUM_RATE"'"
 	"       access='read'/>"
 	"    <property type='d' name='"RSU_INTERFACE_PROP_MAXIMUM_RATE"'"

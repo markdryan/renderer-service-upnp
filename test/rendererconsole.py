@@ -76,6 +76,9 @@ class Renderer(object):
     def get_props(self, inner_if_name = ""):
         return self.__propsIF.GetAll(inner_if_name)
 
+    def print_props(self, inner_if_name = ""):
+        print_json(self.get_props(inner_if_name))
+
     def set_prop(self, prop_name, if_name, val):
         """
         Sets only the following properties :
@@ -149,4 +152,4 @@ if __name__ == "__main__":
         if (if_name in interface_list) :
             print("\nProperties of %s on %s:" % (if_name, name))
             print("¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯" + (len(name) + len(if_name)) * "¯")
-            print_json(renderer.get_props(if_name))
+            renderer.print_props(if_name)

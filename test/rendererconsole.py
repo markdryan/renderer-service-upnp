@@ -54,6 +54,7 @@ class Renderer(object):
         self.__path = object_path
         self.__propsIF = get_interface(object_path, PROPS_IF_NAME)
         self.__playerIF = get_interface(object_path, PLAYER_IF_NAME)
+        self.__pushhostIF = get_interface(object_path, PUSH_HOST_IF_NAME)
 
     def get_interfaces(self):
         try:
@@ -87,6 +88,7 @@ class Renderer(object):
         """
         return self.__propsIF.Set(if_name, prop_name, val)
 
+# Control methods
     def play(self):
         self.__playerIF.Play()
 
@@ -113,6 +115,13 @@ class Renderer(object):
 
     def stop(self):
         self.__playerIF.Stop()
+
+# Push Host methods
+    def host_file(self, path):
+        return self.__pushhostIF.HostFile(path)
+
+    def remove_file(self, path):
+        self.__pushhostIF.RemoveFile(path)
 
 class Manager(object):
     """

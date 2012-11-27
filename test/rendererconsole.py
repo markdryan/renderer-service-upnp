@@ -53,7 +53,7 @@ class Renderer(object):
     def __init__(self, object_path):
         self.__path = object_path
         self.__propsIF = get_interface(object_path, PROPS_IF_NAME)
-        self.__propsPlayer = get_interface(object_path, PLAYER_IF_NAME)
+        self.__playerIF = get_interface(object_path, PLAYER_IF_NAME)
 
     def get_interfaces(self):
         try:
@@ -88,31 +88,31 @@ class Renderer(object):
         return self.__propsIF.Set(if_name, prop_name, val)
 
     def play(self):
-        self.__propsPlayer.Play()
+        self.__playerIF.Play()
 
     def pause(self):
-        self.__propsPlayer.Pause()
+        self.__playerIF.Pause()
 
     def play_pause(self):
-        self.__propsPlayer.PlayPause()
+        self.__playerIF.PlayPause()
 
     def next(self):
-        self.__propsPlayer.Next()
+        self.__playerIF.Next()
 
     def open_uri(self, uri):
-        self.__propsPlayer.OpenUri(uri)
+        self.__playerIF.OpenUri(uri)
 
     def previous(self):
-        self.__propsPlayer.Previous()
+        self.__playerIF.Previous()
 
     def seek(self, offset):
-        self.__propsPlayer.Seek(offset)
+        self.__playerIF.Seek(offset)
 
     def set_position(self, trackID, position):
-        self.__propsPlayer.setPosition(trackID, position)
+        self.__playerIF.setPosition(trackID, position)
 
     def stop(self):
-        self.__propsPlayer.Stop()
+        self.__playerIF.Stop()
 
 class Manager(object):
     """

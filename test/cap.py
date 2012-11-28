@@ -159,6 +159,27 @@ class UI:
             ren = Renderer(model[tree_iter][0])
             ren.push_file(self.__tmp_file)
 
+    def pick_cb(self, button):
+        dialog = Gtk.FileChooserDialog("Please choose a file", self.__window,
+                                        Gtk.FileChooserAction.OPEN,
+                                        (Gtk.STOCK_CANCEL,
+                                         Gtk.ResponseType.CANCEL,
+                                         Gtk.STOCK_OPEN,
+                                         Gtk.ResponseType.OK))
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            print "Open clicked"
+            pick_file = dialog.get_filename()
+            tree_iter = self.__combo.get_active_iter()
+            if tree_iter != None:
+                model = self.__combo.get_model()
+                ren = Renderer(model[tree_iter][0])
+                dialog.destroy()
+                ren.push_file(pick_file)
+        elif response == Gtk.ResponseType.CANCEL:
+            print "Cancel clicked"
+            dialog.destroy()
+
     def clear_cb(self, button):
         allocation = self.__area.get_allocation()
         self.__pixmap, ctx = UI.__blank_pixmap(allocation.width,
@@ -186,6 +207,8 @@ class UI:
         container.pack_start(area, True, True, 4);
 
         button_bar = Gtk.HBox(False, 0)
+	pick_button = Gtk.Button("Pick & Push");
+        pick_button.connect("clicked", self.pick_cb)
         push_button = Gtk.Button("Push");
         push_button.connect("clicked", self.push_cb)
         clear_button = Gtk.Button("Clear");
@@ -196,6 +219,7 @@ class UI:
         if len(servers_store) > 0:
             self.__combo.set_active(0)
         self.__combo.get_child().set_property("editable", False)
+        button_bar.pack_start(pick_button, True, True, 4)
         button_bar.pack_start(push_button, True, True, 4)
         button_bar.pack_start(clear_button, True, True, 4)
         button_bar.pack_start(self.__combo, True, True, 4)

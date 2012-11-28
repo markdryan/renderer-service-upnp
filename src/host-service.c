@@ -25,9 +25,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libsoup/soup.h>
+#include <glib.h>
+
+#include <libgupnp-av/gupnp-dlna.h>
+#include <libgupnp-dlna/gupnp-dlna-profile.h>
+#include <libgupnp-dlna/gupnp-dlna-profile-guesser.h>
 
 #include "error.h"
 #include "host-service.h"
+#include "log.h"
 
 #define HOST_SERVICE_ROOT "/rendererserviceupnp"
 
@@ -39,6 +45,7 @@ struct rsu_host_file_t_ {
 	GMappedFile *mapped_file;
 	unsigned int mapped_count;
 	gchar *path;
+	gchar *dlna_header;
 };
 
 typedef struct rsu_host_server_t_ rsu_host_server_t;
@@ -51,6 +58,98 @@ struct rsu_host_server_t_ {
 struct rsu_host_service_t_ {
 	GHashTable *servers;
 };
+
+static gchar *prv_compute_dlna_header(const gchar *filename)
+{
+	gchar *uri;
+	GString *header;
+	GError *error = NULL;
+	GUPnPDLNAProfile *profile;
+	GUPnPDLNAProfileGuesser *guesser;
+	gboolean relaxed_mode = TRUE;
+	gboolean extended_mode = TRUE;
+	const char *profile_name;
+	const char *mime_type;
+	GUPnPDLNAOperation operation;
+	GUPnPDLNAFlags flags;
+	GUPnPDLNAConversion conversion;
+
+	header = g_string_new("");
+
+	guesser = gupnp_dlna_profile_guesser_new(relaxed_mode, extended_mode);
+
+	uri = g_filename_to_uri(filename, NULL, &error);
+	if (uri == NULL) {
+		RSU_LOG_WARNING("Unable to convert filename: %s", filename);
+
+		if (error) {
+			RSU_LOG_WARNING("Error: %s", error->message);
+
+			g_error_free(error);
+		}
+
+		goto on_error;
+	}
+
+	profile = gupnp_dlna_profile_guesser_guess_profile_sync(guesser,
+								uri,
+								5000,
+								&error);
+	if (profile == NULL) {
+		RSU_LOG_WARNING("Unable to guess profile for URI: %s", uri);
+
+		if (error) {
+			RSU_LOG_WARNING("Error: %s", error->message);
+
+			g_error_free(error);
+		}
+
+		goto on_error;
+	}
+
+	profile_name = gupnp_dlna_profile_get_name(profile);
+	if (profile_name != NULL)
+		g_string_append_printf(header, "DLNA.ORG_PN=%s;", profile_name);
+
+	operation = GUPNP_DLNA_OPERATION_RANGE;
+	g_string_append_printf(header, "DLNA.ORG_OP=%.2x;", operation);
+
+	conversion = GUPNP_DLNA_CONVERSION_NONE;
+	g_string_append_printf(header, "DLNA.ORG_CI=%.2x;", conversion);
+
+	mime_type = gupnp_dlna_profile_get_mime(profile);
+	if (mime_type != NULL) {
+		flags = GUPNP_DLNA_FLAGS_BACKGROUND_TRANSFER_MODE;
+		flags |= GUPNP_DLNA_FLAGS_CONNECTION_STALL;
+		flags |= GUPNP_DLNA_FLAGS_DLNA_V15;
+
+		if (g_content_type_is_a(mime_type, "image/*"))
+			flags |= GUPNP_DLNA_FLAGS_INTERACTIVE_TRANSFER_MODE;
+		else if (g_content_type_is_a(mime_type, "audio/*")
+			|| g_content_type_is_a(mime_type, "video/*"))
+			flags |= GUPNP_DLNA_FLAGS_STREAMING_TRANSFER_MODE;
+		else {
+			RSU_LOG_WARNING("Unsupported Mime Type: %s", mime_type);
+
+			goto on_error;
+		}
+
+		g_string_append_printf(header, "DLNA.ORG_FLAGS=%.8x", flags);
+		g_string_append_printf(header, "000000000000000000000000");
+	} else {
+		RSU_LOG_WARNING("Unable to discover mime_type");
+	}
+
+on_error:
+
+	RSU_LOG_DEBUG("contentFeatures.dlna.org: %s", header->str);
+
+	g_object_unref(guesser);
+
+	g_free(uri);
+
+	return g_string_free(header, FALSE);
+}
 
 static void prv_host_file_delete(gpointer host_file)
 {
@@ -65,6 +164,7 @@ static void prv_host_file_delete(gpointer host_file)
 		g_ptr_array_unref(hf->clients);
 
 		g_free(hf->mime_type);
+		g_free(hf->dlna_header);
 		g_free(hf);
 	}
 }
@@ -110,6 +210,9 @@ static rsu_host_file_t *prv_host_file_new(const gchar *file, unsigned int id,
 	extension = strrchr(file, '.');
 	hf->path = g_strdup_printf(HOST_SERVICE_ROOT"/%d%s",
 				   hf->id, extension ? extension : "");
+
+	hf->dlna_header = prv_compute_dlna_header(file);
+
 	return hf;
 
 on_error:
@@ -174,7 +277,6 @@ static void prv_soup_server_cb(SoupServer *server, SoupMessage *msg,
 	rsu_host_file_t *hf;
 	rsu_host_server_t *hs = user_data;
 	const gchar *file_name;
-	SoupMessageHeaders *hdrs;
 
 	if (msg->method != SOUP_METHOD_GET) {
 		soup_message_set_status(msg, SOUP_STATUS_NOT_IMPLEMENTED);
@@ -205,15 +307,11 @@ static void prv_soup_server_cb(SoupServer *server, SoupMessage *msg,
 	g_signal_connect(msg, "finished",
 			 G_CALLBACK(prv_soup_message_finished_cb), hf);
 
-	g_object_get(msg, "response-headers", &hdrs, NULL);
+	if ((hf->dlna_header) && strlen(hf->dlna_header) > 0)
+		soup_message_headers_append(msg->response_headers,
+					    "contentFeatures.dlna.org",
+					    hf->dlna_header);
 
-	/* TODO: Need to add the relevant DLNA headers */
-
-/*	soup_message_headers_append(hdrs, "contentFeatures.dlna.org",
-			"DLNA.ORG_PN=PNG_LRG;DLNA.ORG_OP=01;"\
-			"DLNA.ORG_FLAGS=00f00000000000000000000000000000");
-	soup_message_headers_append(hdrs, "Connection", "close");
-*/
 	soup_message_set_status(msg, SOUP_STATUS_OK);
 	soup_message_set_response(msg, hf->mime_type, SOUP_MEMORY_STATIC,
 				  g_mapped_file_get_contents(hf->mapped_file),

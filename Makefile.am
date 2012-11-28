@@ -5,6 +5,7 @@ AM_CFLAGS =	$(GLIB_CFLAGS)				\
 		$(GSSDP_CFLAGS)				\
 		$(GUPNP_CFLAGS)				\
 		$(GUPNPAV_CFLAGS)			\
+		$(GUPNPDLNA_CFLAGS)			\
 		$(SOUP_CFLAGS)				\
 		-DSYS_CONFIG_DIR="\"$(sysconfdir)\"" 	\
 		-include config.h
@@ -47,6 +48,7 @@ renderer_service_upnp_LDADD = $(GLIB_LIBS)	\
 			      $(GSSDP_LIBS)	\
 			      $(GUPNP_LIBS)	\
 			      $(GUPNPAV_LIBS)	\
+			      $(GUPNPDLNA_LIBS)	\
 			      $(SOUP_LIBS)	\
 			      -lm
 

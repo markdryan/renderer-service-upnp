@@ -36,6 +36,7 @@ PKG_CHECK_MODULES([GIO], [gio-2.0 >= 2.26.1])
 PKG_CHECK_MODULES([GSSDP], [gssdp-1.0 >= 0.13.0])
 PKG_CHECK_MODULES([GUPNP], [gupnp-1.0 >= 0.19.0])
 PKG_CHECK_MODULES([GUPNPAV], [gupnp-av-1.0 >= 0.11.0])
+PKG_CHECK_MODULES([GUPNPDLNA], [gupnp-dlna-2.0 >= 0.9])
 PKG_CHECK_MODULES([SOUP], [libsoup-2.4 >= 2.28.2])
 
 # Checks for header files.

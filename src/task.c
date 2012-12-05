@@ -289,6 +289,8 @@ void rsu_task_complete(rsu_task_t *task)
 		else
 			g_dbus_method_invocation_return_value(task->invocation,
 							      NULL);
+
+		task->invocation = NULL;
 	}
 
 finished:

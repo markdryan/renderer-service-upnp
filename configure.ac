@@ -1,7 +1,7 @@
 AC_PREREQ([2.66])
 
 AC_INIT([renderer-service-upnp],
-	[0.2.0],
+	[0.3.0],
 	[https://github.com/01org/renderer-service-upnp/issues/new],
 	,
 	[https://01.org/dleyna/])

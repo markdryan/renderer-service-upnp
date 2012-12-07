@@ -1,8 +1,25 @@
+version 0.3.0
+	- Added a rendererconsole.py test script that allows
+	  renderer-service-upnp to be tested from the command
+	  line.
+	- Renderer-service-upnp's command processing architecure has been
+	  re-worked.
+	  - Only commands executed by a client on a specific server
+	    are now executed sequentially.  All other commands can be executed
+	    in parallel.
+	  - It is now possible for clients to cancel commands.
+		https://github.com/01org/renderer-service-upnp/issues/35
+	- Renderer-service-upnp now correctly computes the DLNA profile of
+	  files it pushes to renderers
+		https://github.com/01org/renderer-service-upnp/issues/50
+	- The test tool cap.py now allows users to chose a file from a
+	  file chooser dialog to push to renderers.
+
 version 0.2.0
-    - The property org.mpris.MediaPlayer2.Player.TransportPlaySpeeds
-      changed from an array of string values to an array of double
-      values.
-    - The org.mpris.MediaPlayer2.Player.Rate property is now writable.
+	- The property org.mpris.MediaPlayer2.Player.TransportPlaySpeeds
+	  changed from an array of string values to an array of double
+	  values.
+	- The org.mpris.MediaPlayer2.Player.Rate property is now writable.
             https://github.com/01org/renderer-service-upnp/issues/19
 
 version 0.1.0

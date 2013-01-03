@@ -38,7 +38,7 @@ renderer_service_upnp_headers =	src/async.h		\
 				src/task-processor.h	\
 				src/upnp.h
 
-bin_PROGRAMS = renderer-service-upnp
+libexec_PROGRAMS = renderer-service-upnp
 
 renderer_service_upnp_SOURCES = $(renderer_service_upnp_sources) \
 				$(renderer_service_upnp_headers)

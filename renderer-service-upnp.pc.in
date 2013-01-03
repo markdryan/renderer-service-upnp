@@ -1,6 +1,6 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-bindir=@bindir@
+libexecdir=@libexecdir@
 
 Name: @PACKAGE@
 Description: UPnP & DLNA service to discover and manipulate renderers

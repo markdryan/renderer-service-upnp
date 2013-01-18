@@ -41,6 +41,7 @@ typedef void (*rsu_task_process_cb_t)(rsu_task_atom_t *task,
 				      GCancellable **cancellable);
 typedef void (*rsu_task_cancel_cb_t)(rsu_task_atom_t *task);
 typedef void (*rsu_task_delete_cb_t)(rsu_task_atom_t *task);
+typedef void (*rsu_task_finally_cb_t)(gboolean cancelled, gpointer user_data);
 
 rsu_task_processor_t *rsu_task_processor_new(GSourceFunc on_quit_cb);
 void rsu_task_processor_free(rsu_task_processor_t *processor);
@@ -68,5 +69,10 @@ void rsu_task_queue_start(const rsu_task_queue_key_t *queue_id);
 void rsu_task_queue_add_task(const rsu_task_queue_key_t *queue_id,
 			     rsu_task_atom_t *task);
 void rsu_task_queue_task_completed(const rsu_task_queue_key_t *queue_id);
+void rsu_task_queue_set_finally(const rsu_task_queue_key_t *queue_id,
+				rsu_task_finally_cb_t finally_cb);
+void rsu_task_queue_set_user_data(const rsu_task_queue_key_t *queue_id,
+				  gpointer user_data);
+gpointer rsu_task_queue_get_user_data(const rsu_task_queue_key_t *queue_id);
 
 #endif /* RSU_TASK_PROCESSOR_H__ */

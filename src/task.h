@@ -88,13 +88,14 @@ struct rsu_task_host_uri_t_ {
 
 typedef struct rsu_task_t_ rsu_task_t;
 struct rsu_task_t_ {
-	rsu_task_atom_t base; /* pseudo inheritance - MUST be first field */
+	rsu_task_atom_t atom; /* pseudo inheritance - MUST be first field */
 	rsu_task_type_t type;
 	gchar *path;
 	const gchar *result_format;
 	GVariant *result;
 	GDBusMethodInvocation *invocation;
 	gboolean synchronous;
+	GCancellable *cancellable;
 	union {
 		rsu_task_get_props_t get_props;
 		rsu_task_get_prop_t get_prop;

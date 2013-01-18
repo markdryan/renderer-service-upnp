@@ -40,7 +40,6 @@ struct rsu_task_queue_t_ {
 	rsu_task_cancel_cb_t task_cancel_cb;
 	rsu_task_delete_cb_t task_delete_cb;
 	rsu_task_finally_cb_t task_queue_finally_cb;
-	GCancellable *cancellable;
 	rsu_task_atom_t *current_task;
 	guint idle_id;
 	gboolean defer_remove;
@@ -76,18 +75,6 @@ static gboolean prv_task_queue_key_equal_cb(gconstpointer ptr1,
 		!strcmp(queue_key1->sink, queue_key2->sink);
 }
 
-static gboolean prv_task_queue_finally_cb(gpointer data)
-{
-	rsu_task_queue_t *task_queue = data;
-
-	task_queue->task_queue_finally_cb(task_queue->cancelled,
-					  task_queue->user_data);
-
-	g_free(task_queue);
-
-	return FALSE;
-}
-
 static void prv_task_queue_key_free_cb(gpointer ptr)
 {
 	rsu_task_queue_key_t *queue_key = ptr;
@@ -101,7 +88,19 @@ static void prv_task_free_cb(gpointer data, gpointer user_data)
 {
 	rsu_task_queue_t *task_queue = user_data;
 
-	task_queue->task_delete_cb(data);
+	task_queue->task_delete_cb(data, task_queue->user_data);
+}
+
+static gboolean prv_task_queue_finally_cb(gpointer data)
+{
+	rsu_task_queue_t *task_queue = data;
+
+	task_queue->task_queue_finally_cb(task_queue->cancelled,
+					  task_queue->user_data);
+
+	g_free(task_queue);
+
+	return FALSE;
 }
 
 static void prv_task_queue_free_cb(gpointer data)
@@ -112,8 +111,6 @@ static void prv_task_queue_free_cb(gpointer data)
 
 	g_ptr_array_foreach(task_queue->tasks, prv_task_free_cb, task_queue);
 	g_ptr_array_unref(task_queue->tasks);
-	if (task_queue->cancellable)
-		g_object_unref(task_queue->cancellable);
 
 	if (task_queue->task_queue_finally_cb)
 		g_idle_add(prv_task_queue_finally_cb, task_queue);
@@ -192,8 +189,8 @@ static void prv_task_cancel_and_free_cb(gpointer data, gpointer user_data)
 {
 	rsu_task_queue_t *task_queue = user_data;
 
-	task_queue->task_cancel_cb(data);
-	task_queue->task_delete_cb(data);
+	task_queue->task_cancel_cb(data, task_queue->user_data);
+	task_queue->task_delete_cb(data, task_queue->user_data);
 }
 
 static void prv_task_queue_cancel(const rsu_task_queue_key_t *queue_id,
@@ -211,12 +208,8 @@ static void prv_task_queue_cancel(const rsu_task_queue_key_t *queue_id,
 	}
 
 	if (task_queue->current_task) {
-		task_queue->task_cancel_cb(task_queue->current_task);
-
-		if (task_queue->cancellable)
-			g_cancellable_cancel(task_queue->cancellable);
-		else
-			rsu_task_queue_task_completed(queue_id);
+		task_queue->task_cancel_cb(task_queue->current_task,
+					   task_queue->user_data);
 	} else if (task_queue->flags & RSU_TASK_QUEUE_FLAG_AUTO_REMOVE) {
 		RSU_LOG_DEBUG("Removing queue <%s,%s>",
 			      queue_id->source, queue_id->sink);
@@ -279,10 +272,8 @@ static gboolean prv_free_queue_for_source(gpointer key, gpointer value,
 	gboolean ret_val = FALSE;
 
 	if (!strcmp(source, queue_key->source) && !queue->defer_remove) {
-		queue->defer_remove = (queue->cancellable != NULL);
-
+		queue->defer_remove = (queue->current_task != NULL);
 		prv_task_queue_cancel(queue_key, queue);
-
 		if (!queue->defer_remove) {
 			RSU_LOG_DEBUG("Removing queue <%s,%s>",
 				      queue_key->source, queue_key->sink);
@@ -318,10 +309,8 @@ static gboolean prv_free_queue_for_sink(gpointer key, gpointer value,
 	gboolean ret_val = FALSE;
 
 	if (!strcmp(sink, queue_key->sink) && !queue->defer_remove) {
-		queue->defer_remove = (queue->cancellable != NULL);
-
+		queue->defer_remove = (queue->current_task != NULL);
 		prv_task_queue_cancel(queue_key, queue);
-
 		if (!queue->defer_remove) {
 			RSU_LOG_DEBUG("Removing queue <%s,%s>",
 				      queue_key->source, queue_key->sink);
@@ -383,7 +372,7 @@ static gboolean prv_task_queue_process_task(gpointer user_data)
 	queue->current_task = g_ptr_array_index(queue->tasks, 0);
 	g_ptr_array_remove_index(queue->tasks, 0);
 	queue_id->processor->running_tasks++;
-	queue->task_process_cb(queue->current_task, &queue->cancellable);
+	queue->task_process_cb(queue->current_task, queue->user_data);
 
 	RSU_LOG_DEBUG("Exit");
 
@@ -403,7 +392,7 @@ void rsu_task_queue_start(const rsu_task_queue_key_t *queue_id)
 	if (queue->defer_remove)
 		goto exit;
 
-	if (!queue->cancellable && !queue->idle_id)
+	if (!queue->current_task && !queue->idle_id)
 		queue->idle_id = g_idle_add(prv_task_queue_process_task,
 					    (gpointer)queue_id);
 
@@ -429,7 +418,7 @@ void rsu_task_queue_add_task(const rsu_task_queue_key_t *queue_id,
 		goto exit;
 
 	if (queue->flags & RSU_TASK_QUEUE_FLAG_AUTO_START) {
-		if (!queue->cancellable && !queue->idle_id)
+		if (!queue->current_task && !queue->idle_id)
 			queue->idle_id = g_idle_add(prv_task_queue_process_task,
 						    (gpointer)queue_id);
 	}
@@ -448,13 +437,8 @@ void rsu_task_queue_task_completed(const rsu_task_queue_key_t *queue_id)
 
 	queue = g_hash_table_lookup(processor->task_queues, queue_id);
 
-	if (queue->cancellable) {
-		g_object_unref(queue->cancellable);
-		queue->cancellable = NULL;
-	}
-
 	if (queue->current_task) {
-		queue->task_delete_cb(queue->current_task);
+		queue->task_delete_cb(queue->current_task, queue->user_data);
 		queue->current_task = NULL;
 	}
 
@@ -462,17 +446,14 @@ void rsu_task_queue_task_completed(const rsu_task_queue_key_t *queue_id)
 
 	if (processor->quitting && !processor->running_tasks) {
 		g_idle_add(processor->on_quit_cb, NULL);
-	}
-	else if (queue->defer_remove) {
+	} else if (queue->defer_remove) {
 		RSU_LOG_DEBUG("Removing queue <%s,%s>",
 			      queue_id->source, queue_id->sink);
 		g_hash_table_remove(processor->task_queues, queue_id);
-	}
-	else if (queue->tasks->len > 0) {
+	} else if (queue->tasks->len > 0) {
 		queue->idle_id = g_idle_add(prv_task_queue_process_task,
 					    (gpointer)queue_id);
-	}
-	else if (queue->flags & RSU_TASK_QUEUE_FLAG_AUTO_REMOVE) {
+	} else if (queue->flags & RSU_TASK_QUEUE_FLAG_AUTO_REMOVE) {
 		RSU_LOG_DEBUG("Removing queue <%s,%s>",
 			      queue_id->source, queue_id->sink);
 		g_hash_table_remove(processor->task_queues, queue_id);

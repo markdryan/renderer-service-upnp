@@ -38,9 +38,11 @@ typedef enum rsu_task_queue_flag_mask_ rsu_task_queue_flag_mask;
 typedef struct rsu_task_processor_t_ rsu_task_processor_t;
 
 typedef void (*rsu_task_process_cb_t)(rsu_task_atom_t *task,
-				      GCancellable **cancellable);
-typedef void (*rsu_task_cancel_cb_t)(rsu_task_atom_t *task);
-typedef void (*rsu_task_delete_cb_t)(rsu_task_atom_t *task);
+				      gpointer user_data);
+typedef void (*rsu_task_cancel_cb_t)(rsu_task_atom_t *task,
+					 gpointer user_data);
+typedef void (*rsu_task_delete_cb_t)(rsu_task_atom_t *task,
+				     gpointer user_data);
 typedef void (*rsu_task_finally_cb_t)(gboolean cancelled, gpointer user_data);
 
 rsu_task_processor_t *rsu_task_processor_new(GSourceFunc on_quit_cb);

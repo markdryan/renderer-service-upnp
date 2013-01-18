@@ -275,7 +275,7 @@ static const gchar g_rsu_server_introspection[] =
 	"  </interface>"
 	"</node>";
 
-static void prv_process_task(rsu_task_atom_t *task, GCancellable **cancellable);
+static void prv_process_task(rsu_task_atom_t *task, gpointer user_data);
 
 static void prv_rsu_method_call(GDBusConnection *conn,
 				const gchar *sender,
@@ -391,19 +391,19 @@ static void prv_process_sync_task(rsu_task_t *task)
 	switch (task->type) {
 	case RSU_TASK_GET_VERSION:
 		rsu_task_complete(task);
-		rsu_task_queue_task_completed(task->base.queue_id);
+		rsu_task_queue_task_completed(task->atom.queue_id);
 		break;
 	case RSU_TASK_GET_SERVERS:
 		task->result = rsu_upnp_get_server_ids(g_context.upnp);
 		rsu_task_complete(task);
-		rsu_task_queue_task_completed(task->base.queue_id);
+		rsu_task_queue_task_completed(task->atom.queue_id);
 		break;
 	case RSU_TASK_RAISE:
 	case RSU_TASK_QUIT:
 		error = g_error_new(RSU_ERROR, RSU_ERROR_NOT_SUPPORTED,
 				    "Command not supported.");
 		rsu_task_fail(task, error);
-		rsu_task_queue_task_completed(task->base.queue_id);
+		rsu_task_queue_task_completed(task->atom.queue_id);
 		g_error_free(error);
 		break;
 	default:
@@ -424,86 +424,86 @@ static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 		rsu_task_complete(task);
 	}
 
-	rsu_task_queue_task_completed(task->base.queue_id);
+	rsu_task_queue_task_completed(task->atom.queue_id);
 
 	RSU_LOG_DEBUG("Exit");
 }
 
-static void prv_process_async_task(rsu_task_t *task, GCancellable **cancellable)
+static void prv_process_async_task(rsu_task_t *task)
 {
 	RSU_LOG_DEBUG("Enter");
 
-	*cancellable = g_cancellable_new();
+	task->cancellable = g_cancellable_new();
 
 	switch (task->type) {
 	case RSU_TASK_GET_PROP:
 		rsu_upnp_get_prop(g_context.upnp, task,
-				  *cancellable,
+				  task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_GET_ALL_PROPS:
 		rsu_upnp_get_all_props(g_context.upnp, task,
-				       *cancellable,
+				       task->cancellable,
 				       prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_PROP:
 		rsu_upnp_set_prop(g_context.upnp, task,
-				  *cancellable,
+				  task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY:
 		rsu_upnp_play(g_context.upnp, task,
-			      *cancellable,
+			      task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PAUSE:
 		rsu_upnp_pause(g_context.upnp, task,
-			       *cancellable,
+			       task->cancellable,
 			       prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY_PAUSE:
 		rsu_upnp_play_pause(g_context.upnp, task,
-				    *cancellable,
+				    task->cancellable,
 				    prv_async_task_complete);
 		break;
 	case RSU_TASK_STOP:
 		rsu_upnp_stop(g_context.upnp, task,
-			      *cancellable,
+			      task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_NEXT:
 		rsu_upnp_next(g_context.upnp, task,
-			      *cancellable,
+			      task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PREVIOUS:
 		rsu_upnp_previous(g_context.upnp, task,
-				  *cancellable,
+				  task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_OPEN_URI:
 		rsu_upnp_open_uri(g_context.upnp, task,
-				  *cancellable,
+				  task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_SEEK:
 		rsu_upnp_seek(g_context.upnp, task,
-			      *cancellable,
+			      task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_POSITION:
 		rsu_upnp_set_position(g_context.upnp, task,
-				      *cancellable,
+				      task->cancellable,
 				      prv_async_task_complete);
 		break;
 	case RSU_TASK_HOST_URI:
 		rsu_upnp_host_uri(g_context.upnp, task,
-				  *cancellable,
+				  task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_REMOVE_URI:
 		rsu_upnp_remove_uri(g_context.upnp, task,
-				    *cancellable,
+				    task->cancellable,
 				    prv_async_task_complete);
 		break;
 	default:
@@ -513,22 +513,22 @@ static void prv_process_async_task(rsu_task_t *task, GCancellable **cancellable)
 	RSU_LOG_DEBUG("Exit");
 }
 
-static void prv_process_task(rsu_task_atom_t *task, GCancellable **cancellable)
+static void prv_process_task(rsu_task_atom_t *task, gpointer user_data)
 {
 	rsu_task_t *client_task = (rsu_task_t *)task;
 
 	if (client_task->synchronous)
 		prv_process_sync_task(client_task);
 	else
-		prv_process_async_task(client_task, cancellable);
+		prv_process_async_task(client_task);
 }
 
-static void prv_cancel_task(rsu_task_atom_t *task)
+static void prv_cancel_task(rsu_task_atom_t *task, gpointer user_data)
 {
 	rsu_task_cancel((rsu_task_t *)task);
 }
 
-static void prv_delete_task(rsu_task_atom_t *task)
+static void prv_delete_task(rsu_task_atom_t *task, gpointer user_data)
 {
 	rsu_task_delete((rsu_task_t *)task);
 }
@@ -627,7 +627,7 @@ static void prv_add_task(rsu_task_t *task, const gchar *sink)
 						prv_cancel_task,
 						prv_delete_task);
 
-	rsu_task_queue_add_task(queue_id, &task->base);
+	rsu_task_queue_add_task(queue_id, &task->atom);
 }
 
 static void prv_rsu_method_call(GDBusConnection *conn,

@@ -102,6 +102,9 @@ static void prv_rsu_task_delete(rsu_task_t *task)
 	if (task->result)
 		g_variant_unref(task->result);
 
+	if (task->cancellable)
+		g_object_unref(task->cancellable);
+
 	g_free(task);
 }
 
@@ -327,6 +330,9 @@ void rsu_task_cancel(rsu_task_t *task)
 		task->invocation = NULL;
 		g_error_free(error);
 	}
+
+	if (task->cancellable)
+		g_cancellable_cancel(task->cancellable);
 
 finished:
 

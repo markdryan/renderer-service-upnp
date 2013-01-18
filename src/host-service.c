@@ -277,8 +277,10 @@ static void prv_soup_server_cb(SoupServer *server, SoupMessage *msg,
 	rsu_host_file_t *hf;
 	rsu_host_server_t *hs = user_data;
 	const gchar *file_name;
+	const char *hdr;
 
-	if (msg->method != SOUP_METHOD_GET) {
+	if ((msg->method != SOUP_METHOD_GET)
+		&& (msg->method != SOUP_METHOD_HEAD)) {
 		soup_message_set_status(msg, SOUP_STATUS_NOT_IMPLEMENTED);
 		goto on_error;
 	}
@@ -290,32 +292,50 @@ static void prv_soup_server_cb(SoupServer *server, SoupMessage *msg,
 		goto on_error;
 	}
 
-	if (hf->mapped_file) {
-		g_mapped_file_ref(hf->mapped_file);
-		++hf->mapped_count;
-	} else {
-		hf->mapped_file = g_mapped_file_new(file_name, FALSE, NULL);
+	hdr = soup_message_headers_get_one(msg->request_headers,
+					   "getContentFeatures.dlna.org");
 
-		if (!hf->mapped_file) {
-			soup_message_set_status(msg, SOUP_STATUS_NOT_FOUND);
+	if (hdr) {
+		if (strcmp(hdr, "1") != 0) {
+			soup_message_set_status(msg, SOUP_STATUS_BAD_REQUEST);
 			goto on_error;
 		}
 
-		hf->mapped_count = 1;
+		if ((hf->dlna_header) && strlen(hf->dlna_header) > 0)
+			soup_message_headers_append(msg->response_headers,
+						    "contentFeatures.dlna.org",
+						    hf->dlna_header);
 	}
 
-	g_signal_connect(msg, "finished",
-			 G_CALLBACK(prv_soup_message_finished_cb), hf);
+	if (msg->method == SOUP_METHOD_GET) {
+		if (hf->mapped_file) {
+			g_mapped_file_ref(hf->mapped_file);
+			++hf->mapped_count;
+		} else {
+			hf->mapped_file = g_mapped_file_new(file_name,
+							    FALSE,
+							    NULL);
 
-	if ((hf->dlna_header) && strlen(hf->dlna_header) > 0)
-		soup_message_headers_append(msg->response_headers,
-					    "contentFeatures.dlna.org",
-					    hf->dlna_header);
+			if (!hf->mapped_file) {
+				soup_message_set_status(msg,
+							SOUP_STATUS_NOT_FOUND);
+				goto on_error;
+			}
+
+			hf->mapped_count = 1;
+		}
+
+		g_signal_connect(msg, "finished",
+				 G_CALLBACK(prv_soup_message_finished_cb), hf);
+
+
+		soup_message_set_response(msg, hf->mime_type,
+				SOUP_MEMORY_STATIC,
+				g_mapped_file_get_contents(hf->mapped_file),
+				g_mapped_file_get_length(hf->mapped_file));
+	}
 
 	soup_message_set_status(msg, SOUP_STATUS_OK);
-	soup_message_set_response(msg, hf->mime_type, SOUP_MEMORY_STATIC,
-				  g_mapped_file_get_contents(hf->mapped_file),
-				  g_mapped_file_get_length(hf->mapped_file));
 
 on_error:
 

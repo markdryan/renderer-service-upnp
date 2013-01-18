@@ -60,7 +60,13 @@ gboolean rsu_async_complete_task(gpointer user_data)
 	RSU_LOG_DEBUG_NL();
 
 	cb_data->device->current_task = NULL;
+
+	if (cb_data->proxy != NULL)
+		g_object_remove_weak_pointer((G_OBJECT(cb_data->proxy)),
+					     (gpointer *)&cb_data->proxy);
+
 	cb_data->cb(cb_data->task, cb_data->result, cb_data->error);
+
 	prv_rsu_upnp_cb_data_delete(cb_data);
 
 	return FALSE;
@@ -71,7 +77,11 @@ void rsu_async_task_cancelled(GCancellable *cancellable, gpointer user_data)
 	rsu_async_cb_data_t *cb_data = user_data;
 
 	cb_data->device->current_task = NULL;
-	gupnp_service_proxy_cancel_action(cb_data->proxy, cb_data->action);
+
+	if (cb_data->proxy != NULL)
+		gupnp_service_proxy_cancel_action(cb_data->proxy,
+						  cb_data->action);
+
 	if (!cb_data->error)
 		cb_data->error = g_error_new(RSU_ERROR, RSU_ERROR_CANCELLED,
 					     "Operation cancelled.");

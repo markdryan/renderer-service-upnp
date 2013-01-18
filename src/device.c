@@ -1348,6 +1348,8 @@ static void prv_get_position_info(GCancellable *cancellable,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.av_proxy;
+	g_object_add_weak_pointer((G_OBJECT(context->service_proxies.av_proxy)),
+				  (gpointer *)&cb_data->proxy);
 	cb_data->action =
 		gupnp_service_proxy_begin_action(cb_data->proxy,
 						 "GetPositionInfo",
@@ -1866,6 +1868,8 @@ void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.rc_proxy;
+	g_object_add_weak_pointer((G_OBJECT(context->service_proxies.rc_proxy)),
+				  (gpointer *)&cb_data->proxy);
 
 	prv_set_volume(cb_data, set_prop->params);
 	return;
@@ -1964,6 +1968,8 @@ void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.av_proxy;
+	g_object_add_weak_pointer((G_OBJECT(context->service_proxies.av_proxy)),
+				  (gpointer *)&cb_data->proxy);
 	cb_data->action =
 		gupnp_service_proxy_begin_action(cb_data->proxy,
 						 "Play",
@@ -2008,6 +2014,8 @@ static void prv_simple_command(rsu_device_t *device, rsu_task_t *task,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.av_proxy;
+	g_object_add_weak_pointer((G_OBJECT(context->service_proxies.av_proxy)),
+				  (gpointer *)&cb_data->proxy);
 	cb_data->action =
 		gupnp_service_proxy_begin_action(cb_data->proxy,
 						 command_name,
@@ -2064,6 +2072,8 @@ void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.av_proxy;
+	g_object_add_weak_pointer((G_OBJECT(context->service_proxies.av_proxy)),
+				  (gpointer *)&cb_data->proxy);
 	cb_data->action =
 		gupnp_service_proxy_begin_action(cb_data->proxy,
 						 "SetAVTransportURI",
@@ -2100,6 +2110,8 @@ static void prv_device_set_position(rsu_device_t *device, rsu_task_t *task,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 	cb_data->proxy = context->service_proxies.av_proxy;
+	g_object_add_weak_pointer((G_OBJECT(context->service_proxies.av_proxy)),
+				  (gpointer *)&cb_data->proxy);
 	cb_data->action =
 		gupnp_service_proxy_begin_action(cb_data->proxy,
 						 "Seek",

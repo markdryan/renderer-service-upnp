@@ -93,48 +93,34 @@ rsu_device_context_t *rsu_device_get_context(rsu_device_t *device);
 void rsu_device_subscribe_to_service_changes(rsu_device_t *device);
 
 void rsu_device_set_prop(rsu_device_t *device, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb);
 void rsu_device_get_prop(rsu_device_t *device, rsu_task_t *task,
-			GCancellable *cancellable,
 			rsu_upnp_task_complete_t cb);
 void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
-			      GCancellable *cancellable,
 			      rsu_upnp_task_complete_t cb);
 void rsu_device_play(rsu_device_t *device, rsu_task_t *task,
-		     GCancellable *cancellable,
 		     rsu_upnp_task_complete_t cb);
 void rsu_device_pause(rsu_device_t *device, rsu_task_t *task,
-		     GCancellable *cancellable,
 		     rsu_upnp_task_complete_t cb);
 void rsu_device_play_pause(rsu_device_t *device, rsu_task_t *task,
-			   GCancellable *cancellable,
 			   rsu_upnp_task_complete_t cb);
 void rsu_device_stop(rsu_device_t *device, rsu_task_t *task,
-		     GCancellable *cancellable,
 		     rsu_upnp_task_complete_t cb);
 void rsu_device_next(rsu_device_t *device, rsu_task_t *task,
-		     GCancellable *cancellable,
 		     rsu_upnp_task_complete_t cb);
 void rsu_device_previous(rsu_device_t *device, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb);
 void rsu_device_open_uri(rsu_device_t *device, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb);
 void rsu_device_seek(rsu_device_t *device, rsu_task_t *task,
-		     GCancellable *cancellable,
 		     rsu_upnp_task_complete_t cb);
 void rsu_device_set_position(rsu_device_t *device, rsu_task_t *task,
-			     GCancellable *cancellable,
 			     rsu_upnp_task_complete_t cb);
 void rsu_device_host_uri(rsu_device_t *device, rsu_task_t *task,
 			 rsu_host_service_t *host_service,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb);
 void rsu_device_remove_uri(rsu_device_t *device, rsu_task_t *task,
 			   rsu_host_service_t *host_service,
-			   GCancellable *cancellable,
 			   rsu_upnp_task_complete_t cb);
 
 #endif

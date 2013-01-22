@@ -438,72 +438,58 @@ static void prv_process_async_task(rsu_task_t *task)
 	switch (task->type) {
 	case RSU_TASK_GET_PROP:
 		rsu_upnp_get_prop(g_context.upnp, task,
-				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_GET_ALL_PROPS:
 		rsu_upnp_get_all_props(g_context.upnp, task,
-				       async_task->cancellable,
 				       prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_PROP:
 		rsu_upnp_set_prop(g_context.upnp, task,
-				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY:
 		rsu_upnp_play(g_context.upnp, task,
-			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PAUSE:
 		rsu_upnp_pause(g_context.upnp, task,
-			       async_task->cancellable,
 			       prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY_PAUSE:
 		rsu_upnp_play_pause(g_context.upnp, task,
-				    async_task->cancellable,
 				    prv_async_task_complete);
 		break;
 	case RSU_TASK_STOP:
 		rsu_upnp_stop(g_context.upnp, task,
-			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_NEXT:
 		rsu_upnp_next(g_context.upnp, task,
-			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PREVIOUS:
 		rsu_upnp_previous(g_context.upnp, task,
-				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_OPEN_URI:
 		rsu_upnp_open_uri(g_context.upnp, task,
-				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_SEEK:
 		rsu_upnp_seek(g_context.upnp, task,
-			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_POSITION:
 		rsu_upnp_set_position(g_context.upnp, task,
-				      async_task->cancellable,
 				      prv_async_task_complete);
 		break;
 	case RSU_TASK_HOST_URI:
 		rsu_upnp_host_uri(g_context.upnp, task,
-				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_REMOVE_URI:
 		rsu_upnp_remove_uri(g_context.upnp, task,
-				    async_task->cancellable,
 				    prv_async_task_complete);
 		break;
 	default:

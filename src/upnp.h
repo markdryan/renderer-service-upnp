@@ -53,46 +53,32 @@ void rsu_upnp_delete(rsu_upnp_t *upnp);
 GVariant *rsu_upnp_get_server_ids(rsu_upnp_t *upnp);
 GHashTable *rsu_upnp_get_server_udn_map(rsu_upnp_t *upnp);
 void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
-			    GCancellable *cancellable,
 			    rsu_upnp_task_complete_t cb);
 void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
-		    GCancellable *cancellable,
 		    rsu_upnp_task_complete_t cb);
 void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb);
 void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb);
 void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
-			   GCancellable *cancellable,
 			   rsu_upnp_task_complete_t cb);
 void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb);
 void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb);
 void rsu_upnp_lost_client(rsu_upnp_t *upnp, const gchar *client_name);
 

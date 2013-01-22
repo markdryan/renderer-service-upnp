@@ -274,7 +274,6 @@ GHashTable *rsu_upnp_get_server_udn_map(rsu_upnp_t *upnp)
 
 
 void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -291,12 +290,11 @@ void rsu_upnp_set_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_set_prop(device, task, cancellable, cb);
+		rsu_device_set_prop(device, task, cb);
 	}
 }
 
 void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -321,14 +319,13 @@ void rsu_upnp_get_prop(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_get_prop(device, task, cancellable, cb);
+		rsu_device_get_prop(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
-			    GCancellable *cancellable,
 			    rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -350,14 +347,13 @@ void rsu_upnp_get_all_props(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_get_all_props(device, task, cancellable, cb);
+		rsu_device_get_all_props(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -376,14 +372,13 @@ void rsu_upnp_play(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_play(device, task, cancellable, cb);
+		rsu_device_play(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
-		    GCancellable *cancellable,
 		    rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -402,14 +397,13 @@ void rsu_upnp_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_pause(device, task, cancellable, cb);
+		rsu_device_pause(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -428,14 +422,13 @@ void rsu_upnp_play_pause(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_play_pause(device, task, cancellable, cb);
+		rsu_device_play_pause(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -454,14 +447,13 @@ void rsu_upnp_stop(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_stop(device, task, cancellable, cb);
+		rsu_device_stop(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -480,14 +472,13 @@ void rsu_upnp_next(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_next(device, task, cancellable, cb);
+		rsu_device_next(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -506,14 +497,13 @@ void rsu_upnp_previous(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_previous(device, task, cancellable, cb);
+		rsu_device_previous(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -532,14 +522,13 @@ void rsu_upnp_open_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_open_uri(device, task, cancellable, cb);
+		rsu_device_open_uri(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
-		   GCancellable *cancellable,
 		   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -558,14 +547,13 @@ void rsu_upnp_seek(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_seek(device, task, cancellable, cb);
+		rsu_device_seek(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
-			   GCancellable *cancellable,
 			   rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -584,14 +572,13 @@ void rsu_upnp_set_position(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_set_position(device, task, cancellable, cb);
+		rsu_device_set_position(device, task, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
-		       GCancellable *cancellable,
 		       rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -610,15 +597,13 @@ void rsu_upnp_host_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_host_uri(device, task, upnp->host_service,
-				    cancellable, cb);
+		rsu_device_host_uri(device, task, upnp->host_service, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");
 }
 
 void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
-			 GCancellable *cancellable,
 			 rsu_upnp_task_complete_t cb)
 {
 	rsu_device_t *device;
@@ -637,8 +622,7 @@ void rsu_upnp_remove_uri(rsu_upnp_t *upnp, rsu_task_t *task,
 					     "object");
 		(void) g_idle_add(rsu_async_task_complete, cb_data);
 	} else {
-		rsu_device_remove_uri(device, task, upnp->host_service,
-				      cancellable, cb);
+		rsu_device_remove_uri(device, task, upnp->host_service, cb);
 	}
 
 	RSU_LOG_DEBUG("Exit");

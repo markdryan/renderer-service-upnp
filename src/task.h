@@ -95,7 +95,6 @@ struct rsu_task_t_ {
 	GVariant *result;
 	GDBusMethodInvocation *invocation;
 	gboolean synchronous;
-	GCancellable *cancellable;
 	union {
 		rsu_task_get_props_t get_props;
 		rsu_task_get_prop_t get_prop;

@@ -25,36 +25,17 @@
 #include "error.h"
 #include "log.h"
 
-rsu_async_cb_data_t *rsu_async_cb_data_new(rsu_task_t *task,
-					   rsu_upnp_task_complete_t cb,
-					   gpointer private,
-					   GDestroyNotify free_private,
-					   rsu_device_t *device)
+void rsu_async_task_delete(rsu_async_task_t *task)
 {
-	rsu_async_cb_data_t *cb_data = g_new0(rsu_async_cb_data_t, 1);
-
-	cb_data->type = task->type;
-	cb_data->task = task;
-	cb_data->cb = cb;
-	cb_data->private = private;
-	cb_data->free_private = free_private;
-	cb_data->device = device;
-
-	return cb_data;
+	if (task->free_private)
+		task->free_private(task->private);
+	if (task->cancellable)
+		g_object_unref(task->cancellable);
 }
 
-static void prv_rsu_upnp_cb_data_delete(rsu_async_cb_data_t *cb_data)
+gboolean rsu_async_task_complete(gpointer user_data)
 {
-	if (cb_data) {
-		if (cb_data->free_private)
-			cb_data->free_private(cb_data->private);
-		g_free(cb_data);
-	}
-}
-
-gboolean rsu_async_complete_task(gpointer user_data)
-{
-	rsu_async_cb_data_t *cb_data = user_data;
+	rsu_async_task_t *cb_data = user_data;
 
 	RSU_LOG_DEBUG("Enter. Error %p", (void *)cb_data->error);
 	RSU_LOG_DEBUG_NL();
@@ -65,16 +46,14 @@ gboolean rsu_async_complete_task(gpointer user_data)
 		g_object_remove_weak_pointer((G_OBJECT(cb_data->proxy)),
 					     (gpointer *)&cb_data->proxy);
 
-	cb_data->cb(cb_data->task, cb_data->result, cb_data->error);
-
-	prv_rsu_upnp_cb_data_delete(cb_data);
+	cb_data->cb(&cb_data->task, cb_data->error);
 
 	return FALSE;
 }
 
 void rsu_async_task_cancelled(GCancellable *cancellable, gpointer user_data)
 {
-	rsu_async_cb_data_t *cb_data = user_data;
+	rsu_async_task_t *cb_data = user_data;
 
 	cb_data->device->current_task = NULL;
 
@@ -85,16 +64,22 @@ void rsu_async_task_cancelled(GCancellable *cancellable, gpointer user_data)
 	if (!cb_data->error)
 		cb_data->error = g_error_new(RSU_ERROR, RSU_ERROR_CANCELLED,
 					     "Operation cancelled.");
-	(void) g_idle_add(rsu_async_complete_task, cb_data);
+	(void) g_idle_add(rsu_async_task_complete, cb_data);
 }
 
 void rsu_async_task_lost_object(gpointer user_data)
 {
-	rsu_async_cb_data_t *cb_data = user_data;
+	rsu_async_task_t *cb_data = user_data;
 
 	if (!cb_data->error)
 		cb_data->error = g_error_new(RSU_ERROR, RSU_ERROR_LOST_OBJECT,
 					     "Renderer died before command "
 					     "could be completed.");
-	(void) g_idle_add(rsu_async_complete_task, cb_data);
+	(void) g_idle_add(rsu_async_task_complete, cb_data);
+}
+
+void rsu_async_task_cancel(rsu_async_task_t *task)
+{
+	if (task->cancellable)
+		g_cancellable_cancel(task->cancellable);
 }

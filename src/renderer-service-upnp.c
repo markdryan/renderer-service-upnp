@@ -30,12 +30,12 @@
 #include <syslog.h>
 #include <sys/signalfd.h>
 
+#include "async.h"
 #include "device.h"
 #include "error.h"
 #include "log.h"
 #include "prop-defs.h"
 #include "settings.h"
-#include "task.h"
 #include "task-processor.h"
 #include "upnp.h"
 
@@ -411,8 +411,7 @@ static void prv_process_sync_task(rsu_task_t *task)
 	}
 }
 
-static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
-				    GError *error)
+static void prv_async_task_complete(rsu_task_t *task, GError *error)
 {
 	RSU_LOG_DEBUG("Enter");
 
@@ -420,7 +419,6 @@ static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 		rsu_task_fail(task, error);
 		g_error_free(error);
 	} else {
-		task->result = result;
 		rsu_task_complete(task);
 	}
 
@@ -431,79 +429,81 @@ static void prv_async_task_complete(rsu_task_t *task, GVariant *result,
 
 static void prv_process_async_task(rsu_task_t *task)
 {
+	rsu_async_task_t *async_task = (rsu_async_task_t *)task;
+
 	RSU_LOG_DEBUG("Enter");
 
-	task->cancellable = g_cancellable_new();
+	async_task->cancellable = g_cancellable_new();
 
 	switch (task->type) {
 	case RSU_TASK_GET_PROP:
 		rsu_upnp_get_prop(g_context.upnp, task,
-				  task->cancellable,
+				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_GET_ALL_PROPS:
 		rsu_upnp_get_all_props(g_context.upnp, task,
-				       task->cancellable,
+				       async_task->cancellable,
 				       prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_PROP:
 		rsu_upnp_set_prop(g_context.upnp, task,
-				  task->cancellable,
+				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY:
 		rsu_upnp_play(g_context.upnp, task,
-			      task->cancellable,
+			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PAUSE:
 		rsu_upnp_pause(g_context.upnp, task,
-			       task->cancellable,
+			       async_task->cancellable,
 			       prv_async_task_complete);
 		break;
 	case RSU_TASK_PLAY_PAUSE:
 		rsu_upnp_play_pause(g_context.upnp, task,
-				    task->cancellable,
+				    async_task->cancellable,
 				    prv_async_task_complete);
 		break;
 	case RSU_TASK_STOP:
 		rsu_upnp_stop(g_context.upnp, task,
-			      task->cancellable,
+			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_NEXT:
 		rsu_upnp_next(g_context.upnp, task,
-			      task->cancellable,
+			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_PREVIOUS:
 		rsu_upnp_previous(g_context.upnp, task,
-				  task->cancellable,
+				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_OPEN_URI:
 		rsu_upnp_open_uri(g_context.upnp, task,
-				  task->cancellable,
+				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_SEEK:
 		rsu_upnp_seek(g_context.upnp, task,
-			      task->cancellable,
+			      async_task->cancellable,
 			      prv_async_task_complete);
 		break;
 	case RSU_TASK_SET_POSITION:
 		rsu_upnp_set_position(g_context.upnp, task,
-				      task->cancellable,
+				      async_task->cancellable,
 				      prv_async_task_complete);
 		break;
 	case RSU_TASK_HOST_URI:
 		rsu_upnp_host_uri(g_context.upnp, task,
-				  task->cancellable,
+				  async_task->cancellable,
 				  prv_async_task_complete);
 		break;
 	case RSU_TASK_REMOVE_URI:
 		rsu_upnp_remove_uri(g_context.upnp, task,
-				    task->cancellable,
+				    async_task->cancellable,
 				    prv_async_task_complete);
 		break;
 	default:

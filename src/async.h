@@ -29,12 +29,10 @@
 #include "task.h"
 #include "upnp.h"
 
-typedef struct rsu_async_cb_data_t_ rsu_async_cb_data_t;
-struct rsu_async_cb_data_t_ {
-	rsu_task_type_t type;
-	rsu_task_t *task;
+typedef struct rsu_async_task_t_ rsu_async_task_t;
+struct rsu_async_task_t_ {
+	rsu_task_t task; /* pseudo inheritance - MUST be first field */
 	rsu_upnp_task_complete_t cb;
-	GVariant *result;
 	GError *error;
 	GUPnPServiceProxyAction *action;
 	GUPnPServiceProxy *proxy;
@@ -45,14 +43,9 @@ struct rsu_async_cb_data_t_ {
 	rsu_device_t *device;
 };
 
-rsu_async_cb_data_t *rsu_async_cb_data_new(rsu_task_t *task,
-					   rsu_upnp_task_complete_t cb,
-					   gpointer private,
-					   GDestroyNotify free_private,
-					   rsu_device_t *device);
-
-gboolean rsu_async_complete_task(gpointer user_data);
+gboolean rsu_async_task_complete(gpointer user_data);
 void rsu_async_task_cancelled(GCancellable *cancellable, gpointer user_data);
+void rsu_async_task_delete(rsu_async_task_t *task);
 void rsu_async_task_lost_object(gpointer user_data);
-
+void rsu_async_task_cancel(rsu_async_task_t *task);
 #endif

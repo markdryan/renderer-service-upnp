@@ -43,8 +43,7 @@ struct rsu_interface_info_t_ {
 };
 
 typedef void (*rsu_upnp_callback_t)(const gchar *path);
-typedef void (*rsu_upnp_task_complete_t)(rsu_task_t *task, GVariant *result,
-					 GError *error);
+typedef void (*rsu_upnp_task_complete_t)(rsu_task_t *task, GError *error);
 
 rsu_upnp_t *rsu_upnp_new(GDBusConnection *connection,
 			 rsu_interface_info_t *interface_info,

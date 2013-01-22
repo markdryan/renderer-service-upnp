@@ -22,7 +22,7 @@
 
 
 #include "error.h"
-#include "task.h"
+#include "async.h"
 
 rsu_task_t *rsu_task_get_version_new(GDBusMethodInvocation *invocation)
 {
@@ -73,6 +73,9 @@ rsu_task_t *rsu_task_quit_new(GDBusMethodInvocation *invocation)
 
 static void prv_rsu_task_delete(rsu_task_t *task)
 {
+	if (!task->synchronous)
+		rsu_async_task_delete((rsu_async_task_t *)task);
+
 	switch (task->type) {
 	case RSU_TASK_GET_ALL_PROPS:
 		g_free(task->ut.get_props.interface_name);
@@ -102,9 +105,6 @@ static void prv_rsu_task_delete(rsu_task_t *task)
 	if (task->result)
 		g_variant_unref(task->result);
 
-	if (task->cancellable)
-		g_object_unref(task->cancellable);
-
 	g_free(task);
 }
 
@@ -113,7 +113,7 @@ static rsu_task_t *prv_device_task_new(rsu_task_type_t type,
 				       const gchar *path,
 				       const gchar *result_format)
 {
-	rsu_task_t *task = g_new0(rsu_task_t, 1);
+	rsu_task_t *task = (rsu_task_t *)g_new0(rsu_async_task_t, 1);
 
 	task->type = type;
 	task->invocation = invocation;
@@ -331,8 +331,8 @@ void rsu_task_cancel(rsu_task_t *task)
 		g_error_free(error);
 	}
 
-	if (task->cancellable)
-		g_cancellable_cancel(task->cancellable);
+	if (!task->synchronous)
+		rsu_async_task_cancel((rsu_async_task_t *)task);
 
 finished:
 

@@ -94,6 +94,7 @@ static gchar *prv_compute_dlna_header(const gchar *filename)
 	profile = gupnp_dlna_profile_guesser_guess_profile_sync(guesser,
 								uri,
 								5000,
+								NULL,
 								&error);
 	if (profile == NULL) {
 		RSU_LOG_WARNING("Unable to guess profile for URI: %s", uri);

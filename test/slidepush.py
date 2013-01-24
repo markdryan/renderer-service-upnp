@@ -36,6 +36,7 @@ import glob
 import dbus
 import dbus.service
 import dbus.mainloop.glib
+import shutil
 
 class Renderer:
 
@@ -102,8 +103,10 @@ class OpenProgress(object):
                      '--headless','--invisible', '--convert-to', 'pdf',
                      '--outdir', self.__temp_dir, self.__filename])
             else:
-                result = self.__handle.poll()
-                if result != None:
+                result = 0
+                if self.__handle:
+                    result = self.__handle.poll()
+                if self.__handle == None or result != None:
                     self.__handle = None
                     if result != 0:
                         raise Exception("Error processing file")
@@ -118,7 +121,7 @@ class OpenProgress(object):
                                                           output_fname])
                         self.__state = OpenProgress.CONVERT_TO_PNG
                         self.__text.set_text(
-                            "Converting the presentation to JPG files")
+                            "Converting to JPG files")
                     else:
                         os.remove(self.__pdf_file)
                         self.__dialog.destroy()
@@ -141,13 +144,18 @@ class OpenProgress(object):
     def __init__(self, window, filename, temp_dir):
         self.__temp_dir = temp_dir
         self.__filename = filename
-        self.__state = OpenProgress.CONVERT_INIT
         dialog = Gtk.Dialog("Opening " + filename, window,
                             Gtk.DialogFlags.MODAL)
         dialog.set_default_size(320, 100)
         progress_bar = Gtk.ProgressBar()
         button = Gtk.Button("Cancel")
         button.connect("clicked", self.__close)
+        if filename.lower().endswith(".pdf"):
+            self.__state = OpenProgress.CONVERT_TO_PDF
+            shutil.copy(self.__filename, self.__temp_dir)
+        else:
+            self.__state = OpenProgress.CONVERT_INIT
+        self.__handle = None
         text = Gtk.Label("Converting to PDF")
         vbox = dialog.get_content_area()
         vbox.pack_start(text, True, True, 0)
@@ -218,6 +226,7 @@ class MainWindow(object):
         file_filter = Gtk.FileFilter()
         file_filter.set_name("Presentations")
         file_filter.add_pattern("*.odp")
+        file_filter.add_pattern("*.pdf")
         file_filter.add_pattern("*.ppt")
         file_filter.add_pattern("*.ppx")
         dialog.add_filter(file_filter)
@@ -338,7 +347,7 @@ class MainWindow(object):
         slide_container.pack_start(slide_canvas, True, True, 4);
 
         button_bar = Gtk.HBox(False, 0)
-        open_button = Gtk.Button("Open Presentation ...")
+        open_button = Gtk.Button("Open File ...")
         open_button.connect("clicked", self.__open_file)
 
         servers_store = self.__create_renderers_store()

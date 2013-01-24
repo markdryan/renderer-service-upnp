@@ -57,7 +57,8 @@ class Renderer:
             self.__hostIF.RemoveFile(fname)
         except:
             pass
-        self.__playerIF.Stop()
+        if self.get_prop("PlaybackStatus") == "Playing":
+            self.__playerIF.Stop()
         uri = self.__hostIF.HostFile(fname)
         self.__playerIF.OpenUri(uri)
         self.__playerIF.Play()

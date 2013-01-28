@@ -1937,6 +1937,7 @@ void rsu_device_get_all_props(rsu_device_t *device, rsu_task_t *task,
 		cb_data->cb = cb;
 		cb_data->private = device_cb_data;
 		cb_data->device = device;
+		cb_data->free_private = g_free;
 
 		prv_get_position_info(cb_data);
 	} else {

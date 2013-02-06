@@ -1,0 +1,115 @@
+{
+   g_type_register_static
+   Memcheck:Leak
+   ...
+   fun:g_type_register_static
+   ...
+   fun:main
+}
+
+{
+   g_type_register_fundamental
+   Memcheck:Leak
+   ...
+   fun:g_type_register_fundamental
+   ...
+   fun:main
+}
+
+{
+   g_type_add_interface_static
+   Memcheck:Leak
+   ...
+   fun:g_type_add_interface_static
+   ...
+   fun:main
+}
+
+{
+   g_type_create_instance
+   Memcheck:Leak
+   ...
+   fun:g_type_create_instance
+   ...
+   fun:main
+}
+
+{
+   g_type_class_ref
+   Memcheck:Leak
+   ...
+   fun:g_type_class_ref
+   ...
+   fun:main
+}
+
+{
+   g_type_init_with_debug_flags
+   Memcheck:Leak
+   ...
+   fun:g_type_init_with_debug_flags
+   fun:main
+}
+
+{
+   receive_netlink_message
+   Memcheck:Leak
+   ...
+   fun:receive_netlink_message
+   ...
+   fun:main
+}
+
+{
+   nss_parse_service_list
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   ...
+   fun:main
+}
+
+{
+   g_bus_own_name
+   Memcheck:Leak
+   ...
+   fun:g_bus_get
+   fun:g_bus_own_name
+   fun:main
+}
+
+{
+   g_simple_async_result_complete
+   Memcheck:Leak
+   ...
+   fun:g_simple_async_result_complete
+   ...
+   fun:g_main_loop_run
+   fun:main
+}
+
+{
+   gupnp_service_proxy_dispose
+   Memcheck:Leak
+   ...
+   fun:gupnp_service_proxy_dispose
+   ...
+}
+
+{
+   soup_session_get_connection
+   Memcheck:Leak
+   ...
+   fun:soup_session_get_connection
+   ...
+   fun:g_main_loop_run
+   fun:main
+}
+
+{
+   g_dbus_node_info_new_for_xml
+   Memcheck:Leak
+   ...
+   fun:g_dbus_node_info_new_for_xml
+   ...
+}
